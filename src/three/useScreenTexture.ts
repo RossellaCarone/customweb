@@ -2,8 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { Project } from "@/data/projects";
 
-const SCREEN_W = 1600;
-const SCREEN_H = 1000;
+const SCREEN_W = 1280;
+const SCREEN_H = 800;
+const TARGET_FPS = 30;
+const FRAME_MS = 1000 / TARGET_FPS;
 
 interface ScreenTextureOptions {
   projects: Project[];
@@ -13,7 +15,6 @@ interface ScreenTextureOptions {
   slideshowRange: [number, number];
   /** Scroll range where gallery plays (immersive) */
   galleryRange: [number, number];
-  intervalMs?: number;
 }
 
 interface LoadedAssets {
@@ -31,11 +32,31 @@ export function useScreenTexture({
   scrollRef,
   slideshowRange,
   galleryRange,
-  intervalMs = 4200,
 }: ScreenTextureOptions) {
   const [assets, setAssets] = useState<LoadedAssets | null>(null);
-  const slideshowIdxRef = useRef(0);
-  const lastSwapRef = useRef(performance.now());
+  const lastRenderRef = useRef(0);
+  const pointerRef = useRef({ x: -1, y: -1, active: false });
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      pointerRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        active: true,
+      };
+    };
+
+    const onLeave = () => {
+      pointerRef.current.active = false;
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseleave", onLeave);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseleave", onLeave);
+    };
+  }, []);
 
   // Load all screenshots
   useEffect(() => {
@@ -118,27 +139,191 @@ export function useScreenTexture({
       }
     };
 
-    /* ---------- MODE A: SLIDESHOW ---------- */
+    const drawManifesto = (alpha = 1, t = 0) => {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+
+      // Mini hero inside laptop screen
+      ctx.fillStyle = "#0A0A0F";
+      ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, SCREEN_H);
+      bgGrad.addColorStop(0, "#0A0A0F");
+      bgGrad.addColorStop(1, "#11131A");
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+
+      const halo = ctx.createRadialGradient(
+        SCREEN_W * 0.8,
+        SCREEN_H * 0.16,
+        10,
+        SCREEN_W * 0.8,
+        SCREEN_H * 0.16,
+        420
+      );
+      halo.addColorStop(0, "rgba(200,169,110,0.22)");
+      halo.addColorStop(1, "rgba(200,169,110,0)");
+      ctx.fillStyle = halo;
+      ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+
+      // Header bar
+      ctx.strokeStyle = "rgba(240,235,225,0.15)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(70, 78);
+      ctx.lineTo(SCREEN_W - 70, 78);
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(240,235,225,0.8)";
+      ctx.font = "400 16px 'DM Mono', monospace";
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "left";
+      ctx.fillText("CUSTOM WEB", 70, 50);
+      ctx.textAlign = "right";
+      ctx.fillText("WEB EXPERIENCE DESIGN", SCREEN_W - 70, 50);
+
+      // Hero copy
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#F0EBE1";
+      ctx.font = "300 italic 72px 'Cormorant Garamond', serif";
+      ctx.fillText("Il sito web su misura", 84, 220);
+      ctx.fillText("per il tuo", 84, 302);
+
+      ctx.fillStyle = "rgba(0,0,0,0.35)";
+      ctx.font = "400 italic 102px 'Cormorant Garamond', serif";
+      ctx.fillText("Business", 87, 390);
+      ctx.fillStyle = "#B9975B";
+      ctx.fillText("Business", 84, 386);
+
+      ctx.fillStyle = "rgba(240,235,225,0.82)";
+      ctx.font = "300 20px 'Fraunces', serif";
+      wrapText(
+        ctx,
+        "Una presenza digitale costruita per posizionare il tuo brand con chiarezza, aumentare la fiducia al primo sguardo e guidare l'utente fino al contatto.",
+        88,
+        452,
+        620,
+        31
+      );
+
+      ctx.fillStyle = "rgba(240,235,225,0.58)";
+      ctx.font = "400 13px 'DM Mono', monospace";
+      ctx.fillText("Strategia · Identita` · Conversione", 88, 596);
+
+      // Right feature blocks
+      const cards = [
+        {
+          title: "POSIZIONAMENTO",
+          text: "Proposta di valore leggibile subito, con gerarchia chiara e focus sul tuo vantaggio.",
+        },
+        {
+          title: "FIDUCIA",
+          text: "Design editoriale, tono coerente e dettagli premium che rendono il brand autorevole.",
+        },
+        {
+          title: "RISULTATI",
+          text: "Percorso orientato all'azione: meno dispersione, piu` richieste qualificate.",
+        },
+      ];
+      const px = pointerRef.current.active
+        ? (pointerRef.current.x / window.innerWidth) * SCREEN_W
+        : -1;
+      const py = pointerRef.current.active
+        ? (pointerRef.current.y / window.innerHeight) * SCREEN_H
+        : -1;
+
+      let hoveredCard = -1;
+      const cardX = 824;
+      const cardW = 380;
+      const cardH = 154;
+      const revealBase = Math.max(0, Math.min(1, (alpha - 0.15) / 0.85));
+
+      cards.forEach((_, i) => {
+        const y = 176 + i * 178;
+        if (px >= cardX && px <= cardX + cardW && py >= y && py <= y + cardH) {
+          hoveredCard = i;
+        }
+      });
+
+      cards.forEach((card, i) => {
+        const reveal = Math.max(0, Math.min(1, (revealBase - i * 0.18) / 0.42));
+        const y =
+          176 +
+          i * 178 +
+          (1 - reveal) * 28 +
+          Math.sin(t * 0.0018 + i * 0.9) * 4 * reveal;
+        const isActive = i === hoveredCard;
+
+        ctx.save();
+        ctx.globalAlpha = 0.15 + reveal * 0.85;
+
+        ctx.fillStyle = isActive ? "rgba(18,20,28,0.62)" : "rgba(12,14,20,0.48)";
+        ctx.fillRect(cardX, y, cardW, cardH);
+        ctx.strokeStyle = isActive ? "rgba(200,169,110,0.45)" : "rgba(240,235,225,0.12)";
+        ctx.strokeRect(cardX, y, cardW, cardH);
+        if (isActive) {
+          ctx.fillStyle = "rgba(200,169,110,0.92)";
+          ctx.fillRect(cardX + 10, y + 16, 2, cardH - 32);
+        }
+
+        ctx.fillStyle = "#C8A96E";
+        ctx.font = "400 10px 'DM Mono', monospace";
+        ctx.textAlign = "left";
+        drawTrackedText(ctx, card.title, cardX + 26, y + 29, 1.8);
+
+        ctx.fillStyle = "rgba(240,235,225,0.88)";
+        ctx.font = "300 19px 'Fraunces', serif";
+        wrapText(ctx, card.text, cardX + 26, y + 63, cardW - 52, 27);
+
+        ctx.restore();
+      });
+
+      // Footer hint
+      ctx.fillStyle = "rgba(240,235,225,0.55)";
+      ctx.font = "400 12px 'DM Mono', monospace";
+      ctx.textAlign = "right";
+      ctx.fillText("SCORRI PER ENTRARE", SCREEN_W - 70, SCREEN_H - 44);
+
+      ctx.textAlign = "left";
+      drawScanlines();
+      ctx.restore();
+    };
+
+    /* ---------- MODE A: SCROLL SHOWCASE ---------- */
     const renderSlideshow = (t: number) => {
-      const elapsed = t - lastSwapRef.current;
-      const fade = Math.min(1, elapsed / 700);
+      const s = scrollRef.current;
+      const [s0, s1] = slideshowRange;
+      const local = Math.max(0, Math.min(1, (s - s0) / (s1 - s0)));
 
       ctx.fillStyle = "#0A0A0F";
       ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
 
       const imgs = assets.screenshots;
-      const cur = imgs[slideshowIdxRef.current % imgs.length];
-      const prev = imgs[(slideshowIdxRef.current - 1 + imgs.length) % imgs.length];
+      const first = imgs[0];
+      const second = imgs[Math.min(1, imgs.length - 1)];
 
-      if (fade < 1 && prev !== cur) drawCover(prev, 0, 0, SCREEN_W, SCREEN_H, 1 - fade);
-      drawCover(cur, 0, 0, SCREEN_W, SCREEN_H, fade);
-
-      drawScanlines();
-
-      if (elapsed > intervalMs) {
-        slideshowIdxRef.current = (slideshowIdxRef.current + 1) % imgs.length;
-        lastSwapRef.current = t;
+      if (local < 0.36) {
+        drawCover(first, 0, 0, SCREEN_W, SCREEN_H, 1);
+        ctx.fillStyle = "rgba(0,0,0,0.18)";
+        ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+        drawScanlines();
+        return;
       }
+
+      if (local < 0.72) {
+        const p = (local - 0.36) / (0.72 - 0.36);
+        const cross = Math.max(0, Math.min(1, p / 0.32));
+        drawCover(first, 0, 0, SCREEN_W, SCREEN_H, 1 - cross);
+        drawCover(second, 0, 0, SCREEN_W, SCREEN_H, Math.max(cross, 0.001));
+        ctx.fillStyle = "rgba(0,0,0,0.2)";
+        ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+        drawScanlines();
+        return;
+      }
+
+      const p = Math.max(0, Math.min(1, (local - 0.72) / 0.16));
+      drawCover(second, 0, 0, SCREEN_W, SCREEN_H, 1 - p);
+      drawManifesto(p, t);
     };
 
     /* ---------- MODE B: GALLERY ---------- */
@@ -309,15 +494,26 @@ export function useScreenTexture({
     };
 
     /* ---------- LOOP ----------
-     * Il crossfade slideshow→galleria inizia DOPO che lo zoom è completato
-     * (zoom: 0.40→0.50) così la galleria non è visibile sullo schermo
-     * prima che la camera ci entri dentro.
+     * Il crossfade slideshow→galleria parte DOPO la schermata fullscreen
+     * intermedia, così la galleria arriva in un secondo momento.
      */
-    const FADE_START = 0.50; // zoom completato
-    const FADE_END   = 0.54; // breve dissolve
+    const FADE_START = 0.995;
+    const FADE_END = 1;
 
     const render = (t: number) => {
       const s = scrollRef.current;
+
+      const shouldRender = s < 1;
+      if (!shouldRender) {
+        raf = requestAnimationFrame(render);
+        return;
+      }
+
+      if (t - lastRenderRef.current < FRAME_MS) {
+        raf = requestAnimationFrame(render);
+        return;
+      }
+      lastRenderRef.current = t;
 
       if (s <= FADE_START) {
         renderSlideshow(t);
@@ -338,7 +534,7 @@ export function useScreenTexture({
 
     raf = requestAnimationFrame(render);
     return () => cancelAnimationFrame(raf);
-  }, [assets, ctx, texture, intervalMs, projects, scrollRef, galleryRange, slideshowRange]);
+  }, [assets, ctx, texture, projects, scrollRef, galleryRange, slideshowRange]);
 
   return texture;
 }
@@ -383,4 +579,18 @@ function roundedRect(
   ctx.arcTo(x, y + h, x, y, r);
   ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
+}
+
+function drawTrackedText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  tracking: number
+) {
+  let xx = x;
+  for (const ch of text) {
+    ctx.fillText(ch, xx, y);
+    xx += ctx.measureText(ch).width + tracking;
+  }
 }

@@ -3,7 +3,6 @@ import { Preloader } from "@/components/Preloader";
 import { Scene } from "@/three/Scene";
 import { useLenisScroll } from "@/hooks/useLenisScroll";
 import { mapRange } from "@/utils/mapRange";
-import { projects } from "@/data/projects";
 
 /**
  * CUSTOM WEB — Scenes 0–3.
@@ -28,28 +27,56 @@ const Index = () => {
   const quoteOpacity =
     mapRange(progress, 0.18, 0.26, 0, 1) * mapRange(progress, 0.36, 0.42, 1, 0);
   const indicatorOpacity = mapRange(progress, 0, 0.04, 1, 0);
-  const galleryHudOpacity =
-    mapRange(progress, 0.46, 0.52, 0, 1) * mapRange(progress, 0.74, 0.78, 1, 0);
-  const outroOpacity = mapRange(progress, 0.86, 0.94, 0, 1);
+  const sceneOpacity = mapRange(progress, 0.88, 0.985, 1, 0);
+  const bridgeMix = mapRange(progress, 0.88, 0.975, 0, 1);
+  const bridgeEase = bridgeMix * bridgeMix * (3 - 2 * bridgeMix);
+  const bridgeOpacity = bridgeEase * 0.82;
+  const laptopExplosion =
+    mapRange(progress, 0.9, 0.975, 0, 1) * mapRange(progress, 0.975, 0.998, 1, 0);
+  const blackMix = mapRange(progress, 0.92, 0.998, 0, 1);
+  const blackScreenOpacity = blackMix * blackMix * (3 - 2 * blackMix);
 
-  // Flash at zoom moment: sharp spike at 0.42, fast decay
-  const zoomFlash = mapRange(progress, 0.40, 0.42, 0, 1) * mapRange(progress, 0.42, 0.50, 1, 0);
   // Motion blur vignette during zoom
   const zoomBlur = mapRange(progress, 0.40, 0.46, 0, 1) * mapRange(progress, 0.46, 0.52, 1, 0);
-
-  // Active project index for HUD
-  const galleryProgress = Math.max(0, Math.min(1, (progress - 0.42) / (0.78 - 0.42)));
-  const activeIdx = Math.min(
-    projects.length - 1,
-    Math.floor(galleryProgress * projects.length)
-  );
-  const activeProject = projects[activeIdx];
 
   return (
     <>
       {!loaded && <Preloader onComplete={() => setLoaded(true)} name="CUSTOM WEB" />}
+         
+      <Scene scrollRef={progressRef} opacity={sceneOpacity} />
 
-      <Scene scrollRef={progressRef} />
+      {/* Single smooth tonal bridge from laptop to black */}
+      <div
+        className="pointer-events-none fixed inset-0 z-[28]"
+        style={{
+          opacity: bridgeOpacity,
+          background: "radial-gradient(ellipse at center, rgba(10,10,15,0.58) 0%, rgba(10,10,15,0.95) 85%)",
+        }}
+      />
+
+      <div
+        className="pointer-events-none fixed inset-0 z-[29]"
+        style={{
+          opacity: blackScreenOpacity * 0.45,
+          background: "linear-gradient(180deg, rgba(6,7,10,0.25) 0%, rgba(6,7,10,0.75) 100%)",
+        }}
+      />
+
+      <div
+        className="pointer-events-none fixed inset-0 z-[34]"
+        style={{
+          opacity: laptopExplosion * 0.38,
+          background:
+            "radial-gradient(ellipse at center, rgba(200,169,110,0.22) 0%, rgba(10,10,15,0.12) 42%, rgba(10,10,15,0.96) 100%)",
+          transform: `scale(${1 + laptopExplosion * 0.16})`,
+          transformOrigin: "center center",
+        }}
+      />
+
+      <div
+        className="pointer-events-none fixed inset-0 z-[36] bg-black"
+        style={{ opacity: blackScreenOpacity }}
+      />
 
       {/* Top-left brand */}
       <header className="fixed left-6 top-6 z-40 flex items-center gap-3 font-mono text-[10px] tracking-mono-xwide text-foreground/70 sm:text-xs">
@@ -99,7 +126,6 @@ const Index = () => {
         className="pointer-events-none fixed left-6 top-1/2 z-30 max-w-xs -translate-y-1/2 sm:left-12 md:max-w-sm lg:left-20"
         style={{ opacity: quoteOpacity }}
       >
-        <p className="mb-3 font-mono text-[10px] tracking-mono-xwide text-gold">— APPROCCIO</p>
         <p className="font-narrative text-xl italic leading-snug text-foreground/90 sm:text-2xl md:text-3xl">
           Un sito non si guarda.
           <br />
@@ -107,35 +133,14 @@ const Index = () => {
         </p>
       </aside>
 
-      {/* Gallery HUD (Scene 3) — minimal frame around the display */}
-      <div
-        className="pointer-events-none fixed inset-0 z-30 flex items-end justify-between px-6 pb-8 sm:px-10 sm:pb-12"
-        style={{ opacity: galleryHudOpacity }}
-      >
-        {/* Bottom-left: active project meta */}
-        <div className="flex flex-col gap-1 font-mono text-[10px] tracking-mono-xwide text-muted-foreground sm:text-xs">
-          <span className="text-gold">— GALLERIA · {activeProject.index} / {String(projects.length).padStart(2, "0")}</span>
-          <span>{activeProject.client.toUpperCase()}</span>
-        </div>
-
-        {/* Bottom-right: live link */}
-        <a
-          href={activeProject.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="pointer-events-auto group flex items-center gap-3 font-mono text-[10px] tracking-mono-xwide text-foreground sm:text-xs"
-        >
-          <span className="transition-colors group-hover:text-gold">VISITA SITO LIVE</span>
-          <span className="text-ember transition-transform group-hover:translate-x-1">→</span>
-        </a>
-      </div>
 
       {/* Right-side scene index */}
       <nav className="fixed right-6 top-1/2 z-30 hidden -translate-y-1/2 flex-col gap-3 font-mono text-[10px] tracking-mono-wide text-muted-foreground md:flex">
         {[
           { id: "01", label: "ENTRATA", at: 0.0, until: 0.1 },
-          { id: "02", label: "STUDIO", at: 0.1, until: 0.42 },
-          { id: "03", label: "GALLERIA", at: 0.42, until: 0.78 },
+          { id: "02", label: "STUDIO", at: 0.1, until: 0.5 },
+          { id: "03", label: "VISIONE", at: 0.5, until: 0.95 },
+          { id: "04", label: "BLACKOUT", at: 0.95, until: 1.0 },
         ].map((s) => {
           const active = progress >= s.at && progress < s.until;
           return (
@@ -153,52 +158,18 @@ const Index = () => {
         })}
       </nav>
 
-      {/* Outro fade-in */}
-      <div
-        className="pointer-events-none fixed inset-0 z-20 bg-background"
-        style={{ opacity: outroOpacity }}
-      />
-
-      {/* Zoom flash — sharp white flare at transition point */}
-      <div
-        className="pointer-events-none fixed inset-0 z-50"
-        style={{
-          opacity: zoomFlash,
-          background: "radial-gradient(ellipse at center, rgba(255,220,160,0.92) 0%, rgba(255,255,255,0.6) 40%, transparent 75%)",
-        }}
-      />
-
       {/* Motion blur vignette — dark rim that pulses during zoom */}
       <div
         className="pointer-events-none fixed inset-0 z-49"
         style={{
           opacity: zoomBlur * 0.7,
           background: "radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.85) 100%)",
-          filter: `blur(${zoomBlur * 6}px)`,
         }}
       />
 
       {/* Long page that creates scroll length */}
       <main className="relative z-10" aria-hidden="true">
-        <div style={{ height: "700vh" }} />
-        <footer className="relative z-30 flex min-h-[60vh] flex-col items-center justify-center gap-4 bg-background px-6 py-20 text-center">
-          <p className="font-mono text-[10px] tracking-mono-xwide text-gold">— PARLIAMONE</p>
-          <p className="font-display text-3xl text-foreground sm:text-5xl">
-            Hai un progetto in mente?
-          </p>
-          <p className="max-w-sm font-mono text-[10px] tracking-mono-wide text-muted-foreground sm:text-xs">
-            Raccontamelo. 
-          </p>
-          <a
-            href="mailto:customweb@gmail.com"
-            className="pointer-events-auto font-mono text-sm tracking-mono-wide text-gold underline-offset-4 hover:underline"
-          >
-            customweb@gmail.com
-          </a>
-          <p className="mt-6 font-mono text-[10px] tracking-mono-xwide text-muted-foreground">
-            © 2026 · CUSTOM WEB · IL VALORE È NEI DETTAGLI
-          </p>
-        </footer>
+        <div style={{ height: "760vh" }} />
       </main>
     </>
   );

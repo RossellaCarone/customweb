@@ -22,9 +22,8 @@ export const Laptop = ({ scrollRef }: LaptopProps) => {
   const screenTexture = useScreenTexture({
     projects,
     scrollRef,
-    slideshowRange: [0.0, 0.42],
-    galleryRange: [0.42, 0.78],
-    intervalMs: 4200,
+    slideshowRange: [0.24, 0.92],
+    galleryRange: [0.99, 1],
   });
 
   useFrame(() => {
