@@ -1,37 +1,39 @@
 export interface Project {
   id: string;
+  index: string;        // "01", "02"
   title: string;
   client: string;
-  year: number;
+  year: string;
+  category: string;
   stack: string[];
   url: string;
-  screenshots: string[];
-  description: string;
-  results?: string;
+  screenshot: string;   // public path
+  blurb: string;        // 1-2 lines
 }
 
-const projects: Project[] = [
+export const projects: Project[] = [
   {
-    id: '01',
-    title: 'Project One',
-    client: 'Client Name',
-    year: 2024,
-    stack: ['Next.js', 'TypeScript', 'Tailwind'],
-    url: 'https://example.com',
-    screenshots: ['/textures/screen-preview/project-1-a.webp'],
-    description: 'A high-performance e-commerce site with custom animations.',
-    results: '+40% conversion rate',
+    id: "ladolcesosta",
+    index: "01",
+    title: "La Dolce Sosta",
+    client: "Dimora · Castellana Grotte",
+    year: "2025",
+    category: "Hospitality · Brand site",
+    stack: ["React", "Tailwind", "CMS", "i18n"],
+    url: "https://ladolcesostahome.com",
+    screenshot: "/screens/ladolcesosta.png",
+    blurb: "Un rifugio esclusivo nel cuore della Puglia, raccontato con eleganza editoriale.",
   },
   {
-    id: '02',
-    title: 'Project Two',
-    client: 'Client Name',
-    year: 2024,
-    stack: ['React', 'Node.js', 'PostgreSQL'],
-    url: 'https://example.com',
-    screenshots: ['/textures/screen-preview/project-2-a.webp'],
-    description: 'A real-time dashboard for logistics data visualization.',
+    id: "dedonato",
+    index: "02",
+    title: "Monica De Donato",
+    client: "Psicologa Clinica · Polignano",
+    year: "2025",
+    category: "Personal brand · Booking",
+    stack: ["React", "Tailwind", "Calendar API"],
+    url: "https://dedonatopsicologa.com",
+    screenshot: "/screens/dedonatopsicologa.png",
+    blurb: "Un percorso visivo verso il benessere — calmo, professionale, accessibile.",
   },
 ];
-
-export default projects;

@@ -1,0 +1,181 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400&family=DM+Mono:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   STUDIO NOTTURNO — Design System
+   Atelier digitale alle 2 di notte. Caldo, denso, raffinato.
+   ========================================================================== */
+
+@layer base {
+  :root {
+    /* Core palette (HSL) */
+    --background: 240 22% 5%;          /* #0A0A0F quasi-nero bluastro */
+    --foreground: 36 38% 91%;          /* #F0EBE1 bianco avorio caldo */
+
+    --surface: 240 18% 8%;             /* leggermente sopra il bg */
+    --surface-elevated: 240 16% 12%;
+    --night: 240 17% 20%;              /* #2A2A3A blu notte */
+
+    --gold: 36 47% 60%;                /* #C8A96E oro antico */
+    --gold-soft: 36 35% 70%;
+    --ember: 14 100% 59%;              /* #FF4D2E arancio bruciato */
+
+    --card: 240 18% 8%;
+    --card-foreground: 36 38% 91%;
+    --popover: 240 18% 8%;
+    --popover-foreground: 36 38% 91%;
+
+    --primary: 36 47% 60%;
+    --primary-foreground: 240 22% 5%;
+
+    --secondary: 240 17% 20%;
+    --secondary-foreground: 36 38% 91%;
+
+    --muted: 240 14% 14%;
+    --muted-foreground: 36 12% 65%;
+
+    --accent: 14 100% 59%;
+    --accent-foreground: 240 22% 5%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 36 38% 91%;
+
+    --border: 240 14% 16%;
+    --input: 240 14% 16%;
+    --ring: 36 47% 60%;
+
+    --radius: 0.25rem;
+
+    /* Typography stacks */
+    --font-display: 'Cormorant Garamond', 'Editorial New', serif;
+    --font-narrative: 'Fraunces', 'Cormorant Garamond', serif;
+    --font-mono: 'DM Mono', 'JetBrains Mono', monospace;
+
+    /* Gradients & atmosphere */
+    --gradient-spotlight: radial-gradient(ellipse at center, hsl(36 47% 60% / 0.08) 0%, transparent 60%);
+    --gradient-night: linear-gradient(180deg, hsl(240 22% 5%) 0%, hsl(240 18% 8%) 100%);
+    --gradient-monitor: linear-gradient(135deg, hsl(220 60% 45% / 0.15), hsl(280 40% 35% / 0.1));
+
+    /* Shadows */
+    --shadow-deep: 0 30px 80px -20px hsl(0 0% 0% / 0.7);
+    --shadow-warm: 0 0 60px hsl(36 47% 60% / 0.15);
+    --shadow-monitor: 0 0 100px hsl(220 80% 60% / 0.25);
+
+    /* Motion */
+    --ease-cinema: cubic-bezier(0.65, 0, 0.35, 1);
+    --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+    --sidebar-background: 240 22% 5%;
+    --sidebar-foreground: 36 38% 91%;
+    --sidebar-primary: 36 47% 60%;
+    --sidebar-primary-foreground: 240 22% 5%;
+    --sidebar-accent: 240 17% 20%;
+    --sidebar-accent-foreground: 36 38% 91%;
+    --sidebar-border: 240 14% 16%;
+    --sidebar-ring: 36 47% 60%;
+  }
+
+  .dark {
+    /* Studio Notturno is already dark. Keep parity. */
+    --background: 240 22% 5%;
+    --foreground: 36 38% 91%;
+    --card: 240 18% 8%;
+    --card-foreground: 36 38% 91%;
+    --popover: 240 18% 8%;
+    --popover-foreground: 36 38% 91%;
+    --primary: 36 47% 60%;
+    --primary-foreground: 240 22% 5%;
+    --secondary: 240 17% 20%;
+    --secondary-foreground: 36 38% 91%;
+    --muted: 240 14% 14%;
+    --muted-foreground: 36 12% 65%;
+    --accent: 14 100% 59%;
+    --accent-foreground: 240 22% 5%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 36 38% 91%;
+    --border: 240 14% 16%;
+    --input: 240 14% 16%;
+    --ring: 36 47% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: auto; /* Lenis manages scroll */
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-narrative);
+    font-feature-settings: 'ss01', 'ss02', 'kern';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: hsl(var(--gold) / 0.3);
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer utilities {
+  .font-display { font-family: var(--font-display); }
+  .font-narrative { font-family: var(--font-narrative); }
+  .font-mono { font-family: var(--font-mono); }
+
+  .text-gold { color: hsl(var(--gold)); }
+  .text-ember { color: hsl(var(--ember)); }
+  .bg-night { background-color: hsl(var(--night)); }
+  .bg-surface { background-color: hsl(var(--surface)); }
+
+  .tracking-mono-wide { letter-spacing: 0.18em; }
+  .tracking-mono-xwide { letter-spacing: 0.32em; }
+
+  .grain::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.04;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  .vignette::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    background: radial-gradient(ellipse at center, transparent 50%, hsl(var(--background) / 0.85) 100%);
+  }
+}
+
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.cursor-blink::after {
+  content: '_';
+  animation: blink 1s steps(1) infinite;
+  margin-left: 0.1em;
+}
+
+@keyframes preloader-line {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fade-up 0.8s var(--ease-soft) both; }

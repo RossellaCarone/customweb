@@ -1,14 +1,20 @@
 /**
- * mapRange — maps a value from one range to another, clamped.
- * e.g. mapRange(scrollProgress, 0.15, 0.40, 0, -1.92)
+ * Map a value from one numeric range to another, optionally clamped.
  */
 export function mapRange(
   value: number,
   inMin: number,
   inMax: number,
   outMin: number,
-  outMax: number
-): number {
-  const clamped = Math.min(Math.max(value, inMin), inMax);
-  return ((clamped - inMin) / (inMax - inMin)) * (outMax - outMin) + outMin;
+  outMax: number,
+  clamp = true
+) {
+  const t = (value - inMin) / (inMax - inMin);
+  const v = outMin + t * (outMax - outMin);
+  if (!clamp) return v;
+  const lo = Math.min(outMin, outMax);
+  const hi = Math.max(outMin, outMax);
+  return Math.min(hi, Math.max(lo, v));
 }
+
+export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
