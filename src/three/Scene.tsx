@@ -19,39 +19,49 @@ const CameraRig = ({ scrollRef }: { scrollRef: React.MutableRefObject<number> })
   useFrame(({ camera }) => {
     const s = scrollRef.current;
 
-    // Phase A — approach desk (0 → 0.15)
-    // Phase B — settle in front of laptop (0.15 → 0.4)
-    // Phase C — push INTO the screen (0.4 → 0.55), camera ends just in front
-    //           of the display so the screen content fills the viewport
-    // Phase D — hold inside (0.55 → 0.78) for the gallery
-    // Phase E — pull back out (0.78 → 0.9)
+    // Phase A — approach desk (0 → 0.40)
+    // Phase C — SNAP zoom INTO the screen (0.40 → 0.50) — fast, punchy
+    // Phase D — hold inside (0.50 → 0.78) for the gallery
+    // Phase E — pull back out (0.78 → 0.92)
 
-    let z: number, y: number, tiltX: number;
+    let z: number, y: number, tiltX: number, fov: number;
 
     if (s < 0.4) {
       z = mapRange(s, 0, 0.4, 5.2, 2.6);
       y = mapRange(s, 0, 0.4, 1.6, 0.95);
       tiltX = mapRange(s, 0, 0.4, -0.18, -0.05);
+      fov = 38;
     } else if (s < 0.78) {
-      // Long, eased push-in distributed across the entire gallery range
-      // so the camera move feels like one continuous breath instead of a
-      // sudden zoom that doesn't match the screen content swap.
-      const k = Math.max(0, Math.min(1, (s - 0.4) / 0.3)); // 0.40 → 0.70
-      const eased = k * k * (3 - 2 * k); // smoothstep
-      z = 2.6 + (1.4 - 2.6) * eased;
-      y = 0.95 + (1.0 - 0.95) * eased;
-      tiltX = -0.05 + (0 - -0.05) * eased;
+      // Fast snap-zoom: cubic ease-in for aggressive acceleration
+      const k = Math.max(0, Math.min(1, (s - 0.4) / 0.10)); // 0.40 → 0.50 full range
+      const eased = k * k * k; // cubic ease-in — starts slow, slams in
+      z = 2.6 + (1.35 - 2.6) * eased;
+      y = 0.95 + (1.02 - 0.95) * eased;
+      tiltX = -0.05 + (0.0 - -0.05) * eased;
+      // FOV narrows sharply during zoom for a "punch-in" lens feel
+      fov = 38 + (28 - 38) * eased;
     } else {
       // Pull back out
-      z = mapRange(s, 0.78, 0.92, 1.4, 3.2);
-      y = mapRange(s, 0.78, 0.92, 1.05, 1.1);
+      z = mapRange(s, 0.78, 0.92, 1.35, 3.2);
+      y = mapRange(s, 0.78, 0.92, 1.02, 1.1);
       tiltX = mapRange(s, 0.78, 0.92, 0, -0.08);
+      fov = 28;
     }
 
-    camera.position.x = THREE.MathUtils.lerp(camera.position.x, 0, 0.06);
-    camera.position.y = THREE.MathUtils.lerp(camera.position.y, y, 0.06);
-    camera.position.z = THREE.MathUtils.lerp(camera.position.z, z, 0.06);
-    camera.rotation.x = THREE.MathUtils.lerp(camera.rotation.x, tiltX, 0.06);
+    // Lerp factor: much higher during zoom phase for snappiness, normal otherwise
+    const inZoom = s >= 0.4 && s < 0.5;
+    const lerpFactor = inZoom ? 0.14 : 0.06;
+
+    camera.position.x = THREE.MathUtils.lerp(camera.position.x, 0, lerpFactor);
+    camera.position.y = THREE.MathUtils.lerp(camera.position.y, y, lerpFactor);
+    camera.position.z = THREE.MathUtils.lerp(camera.position.z, z, lerpFactor);
+    camera.rotation.x = THREE.MathUtils.lerp(camera.rotation.x, tiltX, lerpFactor);
+    (camera as THREE.PerspectiveCamera).fov = THREE.MathUtils.lerp(
+      (camera as THREE.PerspectiveCamera).fov,
+      fov,
+      lerpFactor
+    );
+    (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
   });
   return null;
 };

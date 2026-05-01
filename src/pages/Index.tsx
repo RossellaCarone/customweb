@@ -32,6 +32,11 @@ const Index = () => {
     mapRange(progress, 0.46, 0.52, 0, 1) * mapRange(progress, 0.74, 0.78, 1, 0);
   const outroOpacity = mapRange(progress, 0.86, 0.94, 0, 1);
 
+  // Flash at zoom moment: sharp spike at 0.42, fast decay
+  const zoomFlash = mapRange(progress, 0.40, 0.42, 0, 1) * mapRange(progress, 0.42, 0.50, 1, 0);
+  // Motion blur vignette during zoom
+  const zoomBlur = mapRange(progress, 0.40, 0.46, 0, 1) * mapRange(progress, 0.46, 0.52, 1, 0);
+
   // Active project index for HUD
   const galleryProgress = Math.max(0, Math.min(1, (progress - 0.42) / (0.78 - 0.42)));
   const activeIdx = Math.min(
@@ -152,6 +157,25 @@ const Index = () => {
       <div
         className="pointer-events-none fixed inset-0 z-20 bg-background"
         style={{ opacity: outroOpacity }}
+      />
+
+      {/* Zoom flash — sharp white flare at transition point */}
+      <div
+        className="pointer-events-none fixed inset-0 z-50"
+        style={{
+          opacity: zoomFlash,
+          background: "radial-gradient(ellipse at center, rgba(255,220,160,0.92) 0%, rgba(255,255,255,0.6) 40%, transparent 75%)",
+        }}
+      />
+
+      {/* Motion blur vignette — dark rim that pulses during zoom */}
+      <div
+        className="pointer-events-none fixed inset-0 z-49"
+        style={{
+          opacity: zoomBlur * 0.7,
+          background: "radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.85) 100%)",
+          filter: `blur(${zoomBlur * 6}px)`,
+        }}
       />
 
       {/* Long page that creates scroll length */}
