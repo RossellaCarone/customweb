@@ -1,0 +1,8 @@
+/* ─── CSS Custom Properties ─── */
+:root {
+  --bg:       #0A0A0F;
+  --surface:  #2A2A3A;
+  --ivory:    #F0EBE1;
+  --gold:     #C8A96E;
+  --accent:   #FF4D2E;
+}
