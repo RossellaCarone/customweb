@@ -79,7 +79,7 @@ const Index = () => {
           className="mt-8 max-w-md font-mono text-[10px] tracking-mono-wide text-muted-foreground sm:text-xs"
           style={{ opacity: heroLineOpacity }}
         >
-          siti costruiti su misura · ogni dettaglio ha uno scopo
+          siti web su misura · il valore è nei dettagli
         </p>
       </section>
 
@@ -184,10 +184,10 @@ const Index = () => {
         <footer className="relative z-30 flex min-h-[60vh] flex-col items-center justify-center gap-4 bg-background px-6 py-20 text-center">
           <p className="font-mono text-[10px] tracking-mono-xwide text-gold">— PARLIAMONE</p>
           <p className="font-display text-3xl text-foreground sm:text-5xl">
-            Hai un progetto?
+            Hai un progetto in mente?
           </p>
           <p className="max-w-sm font-mono text-[10px] tracking-mono-wide text-muted-foreground sm:text-xs">
-            Raccontamelo. Niente brief complicati — una mail basta.
+            Raccontamelo. 
           </p>
           <a
             href="mailto:customweb@gmail.com"
@@ -196,7 +196,7 @@ const Index = () => {
             customweb@gmail.com
           </a>
           <p className="mt-6 font-mono text-[10px] tracking-mono-xwide text-muted-foreground">
-            © 2026 · CUSTOM WEB · OGNI DETTAGLIO HA UNO SCOPO
+            © 2026 · CUSTOM WEB · IL VALORE È NEI DETTAGLI
           </p>
         </footer>
       </main>
