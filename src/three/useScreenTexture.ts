@@ -309,26 +309,22 @@ export function useScreenTexture({
     };
 
     /* ---------- LOOP ----------
-     * Long crossfade window between slideshow and gallery so the
-     * content swap feels like a slow dissolve, not a cut.
-     * The window is anchored just before galleryRange[0] and ends
-     * shortly after, giving ~14% of scroll for the blend.
+     * Il crossfade slideshow→galleria inizia DOPO che lo zoom è completato
+     * (zoom: 0.40→0.50) così la galleria non è visibile sullo schermo
+     * prima che la camera ci entri dentro.
      */
-    const FADE_BEFORE = 0.06; // start fading IN gallery this much before g0
-    const FADE_AFTER = 0.08;  // finish fading OUT slideshow this much after g0
+    const FADE_START = 0.50; // zoom completato
+    const FADE_END   = 0.54; // breve dissolve
 
     const render = (t: number) => {
       const s = scrollRef.current;
-      const g0 = galleryRange[0];
-      const fadeStart = g0 - FADE_BEFORE;
-      const fadeEnd = g0 + FADE_AFTER;
 
-      if (s <= fadeStart) {
+      if (s <= FADE_START) {
         renderSlideshow(t);
-      } else if (s >= fadeEnd) {
+      } else if (s >= FADE_END) {
         renderGallery(true);
       } else {
-        const k = (s - fadeStart) / (fadeEnd - fadeStart);
+        const k = (s - FADE_START) / (FADE_END - FADE_START);
         const eased = k * k * (3 - 2 * k);
         renderSlideshow(t);
         ctx.save();

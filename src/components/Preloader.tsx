@@ -9,7 +9,7 @@ interface PreloaderProps {
  * Cinematic preloader: gold line fills, counter ticks 0→100,
  * name reveals letter by letter, flash → fade out.
  */
-export const Preloader = ({ onComplete, name = "STUDIO NOTTURNO" }: PreloaderProps) => {
+export const Preloader = ({ onComplete, name = "CUSTOM WEB" }: PreloaderProps) => {
   const [count, setCount] = useState(0);
   const [visibleChars, setVisibleChars] = useState(0);
   const [flashing, setFlashing] = useState(false);

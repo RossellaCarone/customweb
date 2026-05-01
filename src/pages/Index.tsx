@@ -6,7 +6,7 @@ import { mapRange } from "@/utils/mapRange";
 import { projects } from "@/data/projects";
 
 /**
- * Studio Notturno — Scenes 0–3.
+ * CUSTOM WEB — Scenes 0–3.
  *  0  Preloader
  *  1  Hero (0–0.10)        scrivania, brand
  *  2  Laptop opens (0.10–0.40)
@@ -19,7 +19,7 @@ const Index = () => {
   const { progress, progressRef } = useLenisScroll();
 
   useEffect(() => {
-    document.title = "Studio Notturno — Web Designer & Developer";
+    document.title = "Custom Web — Web Designer & Developer";
   }, []);
 
   // Derived overlay opacities
@@ -47,19 +47,19 @@ const Index = () => {
 
   return (
     <>
-      {!loaded && <Preloader onComplete={() => setLoaded(true)} name="STUDIO NOTTURNO" />}
+      {!loaded && <Preloader onComplete={() => setLoaded(true)} name="CUSTOM WEB" />}
 
       <Scene scrollRef={progressRef} />
 
       {/* Top-left brand */}
       <header className="fixed left-6 top-6 z-40 flex items-center gap-3 font-mono text-[10px] tracking-mono-xwide text-foreground/70 sm:text-xs">
         <span className="inline-block h-1.5 w-1.5 rounded-full bg-gold animate-drift" />
-        <span>STUDIO · NOTTURNO</span>
+        <span>CUSTOM · WEB</span>
       </header>
 
       {/* Top-right status */}
       <div className="fixed right-6 top-6 z-40 font-mono text-[10px] tracking-mono-xwide text-muted-foreground sm:text-xs">
-        <span className="text-gold">●</span> <span>DISPONIBILE · 2026</span>
+        <span className="text-gold">●</span> <span>DISPONIBILE · NUOVI PROGETTI</span>
       </div>
 
       {/* HERO */}
@@ -71,15 +71,15 @@ const Index = () => {
           — Atelier digitale —
         </p>
         <h1 className="font-display text-[14vw] font-light leading-[0.92] tracking-tight text-foreground sm:text-[10vw] md:text-[8vw] lg:text-[7rem] fade-up">
-          Studio
+          Custom
           <br />
-          <em className="font-narrative italic text-gold">Notturno</em>
+          <em className="font-narrative italic text-gold">Web</em>
         </h1>
         <p
           className="mt-8 max-w-md font-mono text-[10px] tracking-mono-wide text-muted-foreground sm:text-xs"
           style={{ opacity: heroLineOpacity }}
         >
-          web designer &amp; developer · siti su misura, fatti con cura maniacale
+          siti costruiti su misura · ogni dettaglio ha uno scopo
         </p>
       </section>
 
@@ -99,11 +99,11 @@ const Index = () => {
         className="pointer-events-none fixed left-6 top-1/2 z-30 max-w-xs -translate-y-1/2 sm:left-12 md:max-w-sm lg:left-20"
         style={{ opacity: quoteOpacity }}
       >
-        <p className="mb-3 font-mono text-[10px] tracking-mono-xwide text-gold">— FILOSOFIA</p>
+        <p className="mb-3 font-mono text-[10px] tracking-mono-xwide text-gold">— APPROCCIO</p>
         <p className="font-narrative text-xl italic leading-snug text-foreground/90 sm:text-2xl md:text-3xl">
-          “Ogni sito che costruisco è uno strumento.
+          Un sito non si guarda.
           <br />
-          <span className="text-gold">Preciso. Veloce. Fatto per durare.</span>”
+          <span className="text-gold">Si vive.</span>
         </p>
       </aside>
 
@@ -184,16 +184,19 @@ const Index = () => {
         <footer className="relative z-30 flex min-h-[60vh] flex-col items-center justify-center gap-4 bg-background px-6 py-20 text-center">
           <p className="font-mono text-[10px] tracking-mono-xwide text-gold">— PARLIAMONE</p>
           <p className="font-display text-3xl text-foreground sm:text-5xl">
-            Hai un progetto in mente?
+            Hai un progetto?
+          </p>
+          <p className="max-w-sm font-mono text-[10px] tracking-mono-wide text-muted-foreground sm:text-xs">
+            Raccontamelo. Niente brief complicati — una mail basta.
           </p>
           <a
-            href="mailto:hello@studionotturno.com"
+            href="mailto:customweb@gmail.com"
             className="pointer-events-auto font-mono text-sm tracking-mono-wide text-gold underline-offset-4 hover:underline"
           >
-            hello@studionotturno.com
+            customweb@gmail.com
           </a>
           <p className="mt-6 font-mono text-[10px] tracking-mono-xwide text-muted-foreground">
-            © 2026 · STUDIO NOTTURNO · FATTO CON CURA MANIACALE
+            © 2026 · CUSTOM WEB · OGNI DETTAGLIO HA UNO SCOPO
           </p>
         </footer>
       </main>
