@@ -132,6 +132,38 @@ export function useScreenTexture({
       ctx.globalAlpha = 1;
     };
 
+    const drawContain = (
+      img: HTMLImageElement,
+      x: number,
+      y: number,
+      w: number,
+      h: number,
+      alpha = 1
+    ) => {
+      const ir = img.width / img.height;
+      const cr = w / h;
+      let dw = w;
+      let dh = h;
+      if (ir > cr) {
+        dw = w;
+        dh = w / ir;
+      } else {
+        dh = h;
+        dw = h * ir;
+      }
+      const dx = x + (w - dw) / 2;
+      const dy = y + (h - dh) / 2;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x, y, w, h);
+      ctx.clip();
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(img, dx, dy, dw, dh);
+      ctx.restore();
+      ctx.globalAlpha = 1;
+    };
+
     const drawScanlines = () => {
       ctx.fillStyle = "rgba(120, 160, 220, 0.035)";
       for (let y = 0; y < SCREEN_H; y += 3) {
@@ -143,146 +175,80 @@ export function useScreenTexture({
       ctx.save();
       ctx.globalAlpha = alpha;
 
-      // Mini hero inside laptop screen
+      // Editorial hero inside laptop screen
       ctx.fillStyle = "#0A0A0F";
       ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
 
-      const bgGrad = ctx.createLinearGradient(0, 0, 0, SCREEN_H);
-      bgGrad.addColorStop(0, "#0A0A0F");
-      bgGrad.addColorStop(1, "#11131A");
+      const bgGrad = ctx.createLinearGradient(0, 0, SCREEN_W, SCREEN_H);
+      bgGrad.addColorStop(0, "#08090D");
+      bgGrad.addColorStop(0.55, "#0E1016");
+      bgGrad.addColorStop(1, "#0B0D12");
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
 
       const halo = ctx.createRadialGradient(
-        SCREEN_W * 0.8,
-        SCREEN_H * 0.16,
+        SCREEN_W * 0.9,
+        SCREEN_H * 0.18,
         10,
-        SCREEN_W * 0.8,
-        SCREEN_H * 0.16,
-        420
+        SCREEN_W * 0.9,
+        SCREEN_H * 0.18,
+        540
       );
-      halo.addColorStop(0, "rgba(200,169,110,0.22)");
+      halo.addColorStop(0, "rgba(200,169,110,0.17)");
       halo.addColorStop(1, "rgba(200,169,110,0)");
       ctx.fillStyle = halo;
       ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
 
-      // Header bar
-      ctx.strokeStyle = "rgba(240,235,225,0.15)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(70, 78);
-      ctx.lineTo(SCREEN_W - 70, 78);
-      ctx.stroke();
-
-      ctx.fillStyle = "rgba(240,235,225,0.8)";
-      ctx.font = "400 16px 'DM Mono', monospace";
-      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#C8A96E";
+      ctx.font = "400 17px 'DM Mono', monospace";
+      ctx.textBaseline = "top";
       ctx.textAlign = "left";
-      ctx.fillText("CUSTOM WEB", 70, 50);
-      ctx.textAlign = "right";
-      ctx.fillText("WEB EXPERIENCE DESIGN", SCREEN_W - 70, 50);
+      drawTrackedText(ctx, "- LA PROPOSTA", 72, 70, 1.4);
 
-      // Hero copy
+      // Hero copy inspired by the requested visual
       ctx.textAlign = "left";
       ctx.fillStyle = "#F0EBE1";
-      ctx.font = "300 italic 72px 'Cormorant Garamond', serif";
-      ctx.fillText("Il sito web su misura", 84, 220);
-      ctx.fillText("per il tuo", 84, 302);
+      ctx.font = "300 78px 'Cormorant Garamond', serif";
+      ctx.fillText("Un sito costruito", 72, 168);
+      ctx.fillText("su misura", 72, 254);
 
-      ctx.fillStyle = "rgba(0,0,0,0.35)";
-      ctx.font = "400 italic 102px 'Cormorant Garamond', serif";
-      ctx.fillText("Business", 87, 390);
+      ctx.fillStyle = "rgba(0,0,0,0.32)";
+      ctx.font = "italic 300 74px 'Cormorant Garamond', serif";
+      ctx.fillText("per il tuo business.", 74, 346);
       ctx.fillStyle = "#B9975B";
-      ctx.fillText("Business", 84, 386);
+      ctx.fillText("per il tuo business.", 72, 343);
 
-      ctx.fillStyle = "rgba(240,235,225,0.82)";
-      ctx.font = "300 20px 'Fraunces', serif";
-      wrapText(
-        ctx,
-        "Una presenza digitale costruita per posizionare il tuo brand con chiarezza, aumentare la fiducia al primo sguardo e guidare l'utente fino al contatto.",
-        88,
-        452,
-        620,
-        31
-      );
-
-      ctx.fillStyle = "rgba(240,235,225,0.58)";
-      ctx.font = "400 13px 'DM Mono', monospace";
-      ctx.fillText("Strategia · Identita` · Conversione", 88, 596);
-
-      // Right feature blocks
-      const cards = [
-        {
-          title: "POSIZIONAMENTO",
-          text: "Proposta di valore leggibile subito, con gerarchia chiara e focus sul tuo vantaggio.",
-        },
-        {
-          title: "FIDUCIA",
-          text: "Design editoriale, tono coerente e dettagli premium che rendono il brand autorevole.",
-        },
-        {
-          title: "RISULTATI",
-          text: "Percorso orientato all'azione: meno dispersione, piu` richieste qualificate.",
-        },
+      const reveal = Math.max(0, Math.min(1, (alpha - 0.16) / 0.84));
+      const bulletItems = [
+        "Design editoriale, non template",
+        "Codice scritto a mano, non page-builder",
+        "Performance, SEO e accessibilita di serie",
+        "Pubblicato in 3-5 settimane",
       ];
-      const px = pointerRef.current.active
-        ? (pointerRef.current.x / window.innerWidth) * SCREEN_W
-        : -1;
-      const py = pointerRef.current.active
-        ? (pointerRef.current.y / window.innerHeight) * SCREEN_H
-        : -1;
 
-      let hoveredCard = -1;
-      const cardX = 824;
-      const cardW = 380;
-      const cardH = 154;
-      const revealBase = Math.max(0, Math.min(1, (alpha - 0.15) / 0.85));
-
-      cards.forEach((_, i) => {
-        const y = 176 + i * 178;
-        if (px >= cardX && px <= cardX + cardW && py >= y && py <= y + cardH) {
-          hoveredCard = i;
-        }
-      });
-
-      cards.forEach((card, i) => {
-        const reveal = Math.max(0, Math.min(1, (revealBase - i * 0.18) / 0.42));
-        const y =
-          176 +
-          i * 178 +
-          (1 - reveal) * 28 +
-          Math.sin(t * 0.0018 + i * 0.9) * 4 * reveal;
-        const isActive = i === hoveredCard;
-
-        ctx.save();
-        ctx.globalAlpha = 0.15 + reveal * 0.85;
-
-        ctx.fillStyle = isActive ? "rgba(18,20,28,0.62)" : "rgba(12,14,20,0.48)";
-        ctx.fillRect(cardX, y, cardW, cardH);
-        ctx.strokeStyle = isActive ? "rgba(200,169,110,0.45)" : "rgba(240,235,225,0.12)";
-        ctx.strokeRect(cardX, y, cardW, cardH);
-        if (isActive) {
-          ctx.fillStyle = "rgba(200,169,110,0.92)";
-          ctx.fillRect(cardX + 10, y + 16, 2, cardH - 32);
-        }
-
-        ctx.fillStyle = "#C8A96E";
-        ctx.font = "400 10px 'DM Mono', monospace";
-        ctx.textAlign = "left";
-        drawTrackedText(ctx, card.title, cardX + 26, y + 29, 1.8);
-
+      ctx.font = "300 36px 'Cormorant Garamond', serif";
+      const startY = 438 + (1 - reveal) * 24;
+      bulletItems.forEach((item, i) => {
+        const y = startY + i * 44;
+        ctx.globalAlpha = alpha * Math.max(0, Math.min(1, reveal - i * 0.1));
         ctx.fillStyle = "rgba(240,235,225,0.88)";
-        ctx.font = "300 19px 'Fraunces', serif";
-        wrapText(ctx, card.text, cardX + 26, y + 63, cardW - 52, 27);
-
-        ctx.restore();
+        ctx.fillText(item, 106, y);
+        ctx.fillStyle = "#C8A96E";
+        ctx.font = "400 14px 'DM Mono', monospace";
+        ctx.fillText(".", 76, y + 7);
+        ctx.font = "300 36px 'Cormorant Garamond', serif";
       });
+      ctx.globalAlpha = alpha;
 
-      // Footer hint
-      ctx.fillStyle = "rgba(240,235,225,0.55)";
-      ctx.font = "400 12px 'DM Mono', monospace";
-      ctx.textAlign = "right";
-      ctx.fillText("SCORRI PER ENTRARE", SCREEN_W - 70, SCREEN_H - 44);
+      // Footer cue
+      ctx.fillStyle = "#DE593C";
+      ctx.font = "400 16px 'DM Mono', monospace";
+      drawTrackedText(ctx, "~ CONTINUA A SCORRERE", 68, SCREEN_H - 66, 1.2);
+
+      // Small square marker near bottom center-left
+      const pulse = 0.55 + Math.sin(t * 0.006) * 0.25;
+      ctx.fillStyle = `rgba(240,235,225,${pulse})`;
+      ctx.fillRect(90, SCREEN_H - 36, 6, 6);
 
       ctx.textAlign = "left";
       drawScanlines();
@@ -303,7 +269,7 @@ export function useScreenTexture({
       const second = imgs[Math.min(1, imgs.length - 1)];
 
       if (local < 0.36) {
-        drawCover(first, 0, 0, SCREEN_W, SCREEN_H, 1);
+        drawContain(first, 0, 0, SCREEN_W, SCREEN_H, 1);
         ctx.fillStyle = "rgba(0,0,0,0.18)";
         ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
         drawScanlines();
@@ -313,8 +279,8 @@ export function useScreenTexture({
       if (local < 0.72) {
         const p = (local - 0.36) / (0.72 - 0.36);
         const cross = Math.max(0, Math.min(1, p / 0.32));
-        drawCover(first, 0, 0, SCREEN_W, SCREEN_H, 1 - cross);
-        drawCover(second, 0, 0, SCREEN_W, SCREEN_H, Math.max(cross, 0.001));
+        drawContain(first, 0, 0, SCREEN_W, SCREEN_H, 1 - cross);
+        drawContain(second, 0, 0, SCREEN_W, SCREEN_H, Math.max(cross, 0.001));
         ctx.fillStyle = "rgba(0,0,0,0.2)";
         ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
         drawScanlines();
@@ -322,7 +288,7 @@ export function useScreenTexture({
       }
 
       const p = Math.max(0, Math.min(1, (local - 0.72) / 0.16));
-      drawCover(second, 0, 0, SCREEN_W, SCREEN_H, 1 - p);
+      drawContain(second, 0, 0, SCREEN_W, SCREEN_H, 1 - p);
       drawManifesto(p, t);
     };
 
@@ -449,12 +415,30 @@ export function useScreenTexture({
       ctx.rect(mockX, mockY + 28, mockW, mockH - 28);
       ctx.clip();
       const ir = img.width / img.height;
-      const dw = mockW;
-      const dh = dw / ir;
-      // pan: 0 = top, 1 = bottom of image
-      const maxPan = Math.max(0, dh - (mockH - 28));
-      const dy = mockY + 28 - pan * maxPan;
-      ctx.drawImage(img, mockX, dy, dw, dh);
+      const frameH = mockH - 28;
+      const useContain = project.id === "dedonato";
+
+      if (useContain) {
+        const cr = mockW / frameH;
+        let dw = mockW;
+        let dh = frameH;
+        if (ir > cr) {
+          dw = mockW;
+          dh = mockW / ir;
+        } else {
+          dh = frameH;
+          dw = frameH * ir;
+        }
+        const dx = mockX + (mockW - dw) / 2;
+        const dy = mockY + 28 + (frameH - dh) / 2;
+        ctx.drawImage(img, dx, dy, dw, dh);
+      } else {
+        const dw = mockW;
+        const dh = dw / ir;
+        const maxPan = Math.max(0, dh - frameH);
+        const dy = mockY + 28 - pan * maxPan;
+        ctx.drawImage(img, mockX, dy, dw, dh);
+      }
       ctx.restore();
 
       // ---- Bottom: visit cue ----
