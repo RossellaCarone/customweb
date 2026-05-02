@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Preloader } from "@/components/Preloader";
 import { Scene } from "@/three/Scene";
 import { useLenisScroll } from "@/hooks/useLenisScroll";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { mapRange } from "@/utils/mapRange";
 
 /**
@@ -19,21 +20,39 @@ const Index = () => {
   const [submitState, setSubmitState] = useState<"idle" | "sent" | "error">("idle");
   const [formValues, setFormValues] = useState({ name: "", email: "", message: "" });
   const [glow, setGlow] = useState({ x: 50, y: 35, active: false });
+  const isMobile = useIsMobile();
   const { progress, progressRef } = useLenisScroll();
 
   const particles = useMemo(
     () =>
-      Array.from({ length: 18 }, (_, i) => ({
+      Array.from({ length: isMobile ? 8 : 18 }, (_, i) => ({
         left: `${8 + (i % 6) * 16 + (i % 2) * 3}%`,
         top: `${10 + Math.floor(i / 6) * 28 + (i % 3) * 4}%`,
         delay: `${(i * 0.37).toFixed(2)}s`,
         duration: `${4.8 + (i % 5) * 1.25}s`,
       })),
-    []
+    [isMobile]
   );
 
   useEffect(() => {
     document.title = "Custom Web — Web Designer & Developer";
+
+    const previousRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+    window.scrollTo(0, 0);
+
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        window.scrollTo(0, 0);
+      }
+    };
+
+    window.addEventListener("pageshow", onPageShow);
+
+    return () => {
+      window.history.scrollRestoration = previousRestoration;
+      window.removeEventListener("pageshow", onPageShow);
+    };
   }, []);
 
   // Derived overlay opacities
@@ -95,7 +114,7 @@ const Index = () => {
     <>
       {!loaded && <Preloader onComplete={() => setLoaded(true)} name="CUSTOM WEB" />}
          
-      <Scene scrollRef={progressRef} opacity={sceneOpacity} />
+      <Scene scrollRef={progressRef} opacity={sceneOpacity} isMobile={isMobile} />
 
       {/* Single smooth tonal bridge from laptop to black */}
       <div
@@ -141,9 +160,9 @@ const Index = () => {
         }}
         onMouseLeave={() => setGlow((g) => ({ ...g, active: false }))}
         style={{
-          opacity: contactOpacity,
-          pointerEvents: contactOpacity > 0.2 ? "auto" : "none",
-          transform: `translateY(${contactLift}px)`,
+          opacity: isMobile ? 1 : contactOpacity,
+          pointerEvents: isMobile ? "auto" : contactOpacity > 0.2 ? "auto" : "none",
+          transform: isMobile ? "translateY(0px)" : `translateY(${contactLift}px)`,
           transition: "opacity 160ms linear, transform 220ms var(--ease-soft)",
         }}
       >
@@ -177,23 +196,23 @@ const Index = () => {
             ))}
           </div>
 
-          <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[900px] flex-col px-6 pb-10 pt-16 sm:px-10 sm:pt-16">
+          <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[760px] flex-col px-5 pb-8 pt-12 sm:px-8 sm:pb-10 sm:pt-14">
             <p className="font-mono text-[11px] uppercase tracking-mono-xwide text-gold sm:text-xs">
               - PARLIAMONE
             </p>
 
-            <h2 className="contact-title mt-5 font-display text-[clamp(2.6rem,7.6vw,4.55rem)] font-light leading-[0.9] tracking-tight text-foreground">
+            <h2 className="contact-title mt-4 font-display text-[clamp(1.8rem,8.2vw,3.95rem)] font-light leading-[0.94] tracking-tight text-foreground">
               <span className="contact-line">Hai un progetto</span>
               <br />
               <em className="contact-line contact-line-gold font-narrative italic text-gold">in mente?</em>
             </h2>
 
-            <p className="contact-lead mt-7 max-w-[42rem] font-narrative text-[clamp(1.12rem,2.05vw,1.8rem)] leading-[1.22] text-foreground/96">
+            <p className="contact-lead mt-4 max-w-[36rem] font-narrative text-[clamp(0.92rem,3.4vw,1.48rem)] leading-[1.26] text-foreground/96">
               Una mail, due righe sull'idea, e fissiamo una chiamata. Niente moduli inutili,
               niente attese. Risposta entro 24 ore lavorative.
             </p>
 
-            <div className="mt-10 flex flex-wrap items-center gap-x-10 gap-y-4 font-mono text-[clamp(0.88rem,1.3vw,1.15rem)] tracking-[0.18em] text-foreground/58">
+            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2.5 font-mono text-[clamp(0.74rem,1.6vw,0.98rem)] tracking-[0.13em] text-foreground/58 sm:mt-8 sm:gap-x-8 sm:gap-y-3 sm:tracking-[0.16em]">
               <a
                 className="contact-link-motion text-gold transition-colors duration-300 hover:text-ember"
                 href="mailto:hello@studionotturno.com"
@@ -209,45 +228,45 @@ const Index = () => {
               </a>
             </div>
 
-            <form className="mt-12 flex max-w-[900px] flex-1 flex-col" onSubmit={handleSubmit}>
+            <form className="mt-7 flex max-w-[760px] flex-1 flex-col sm:mt-9" onSubmit={handleSubmit}>
               {submitState === "idle" ? (
                 <>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4">
                     <label className="group">
-                      <span className="font-mono text-[clamp(1.05rem,1.8vw,1.55rem)] tracking-[0.03em] text-foreground/58">Nome</span>
+                      <span className="font-mono text-[clamp(0.88rem,2.1vw,1.12rem)] tracking-[0.03em] text-foreground/58">Nome</span>
                       <input
                         type="text"
                         name="name"
                         value={formValues.name}
                         onChange={(e) => setFormValues((v) => ({ ...v, name: e.target.value }))}
                         required
-                        className="mt-3 w-full border-b border-foreground/18 bg-transparent pb-4 font-narrative text-[clamp(1.05rem,1.55vw,1.45rem)] text-foreground outline-none transition-colors duration-300 placeholder:text-foreground/25 focus:border-gold"
+                        className="mt-2 w-full border-b border-foreground/18 bg-transparent pb-2.5 font-narrative text-[clamp(0.95rem,2.3vw,1.2rem)] text-foreground outline-none transition-colors duration-300 placeholder:text-foreground/25 focus:border-gold"
                         placeholder=""
                       />
                     </label>
 
                     <label className="group">
-                      <span className="font-mono text-[clamp(1.05rem,1.8vw,1.55rem)] tracking-[0.03em] text-foreground/58">Email</span>
+                      <span className="font-mono text-[clamp(0.88rem,2.1vw,1.12rem)] tracking-[0.03em] text-foreground/58">Email</span>
                       <input
                         type="email"
                         name="email"
                         value={formValues.email}
                         onChange={(e) => setFormValues((v) => ({ ...v, email: e.target.value }))}
                         required
-                        className="mt-3 w-full border-b border-foreground/18 bg-transparent pb-4 font-narrative text-[clamp(1.05rem,1.55vw,1.45rem)] text-foreground outline-none transition-colors duration-300 placeholder:text-foreground/25 focus:border-gold"
+                        className="mt-2 w-full border-b border-foreground/18 bg-transparent pb-2.5 font-narrative text-[clamp(0.95rem,2.3vw,1.2rem)] text-foreground outline-none transition-colors duration-300 placeholder:text-foreground/25 focus:border-gold"
                         placeholder=""
                       />
                     </label>
                   </div>
 
-                  <label className="mt-12">
+                  <label className="mt-5 sm:mt-8">
                     <textarea
                       name="message"
-                      rows={3}
+                      rows={isMobile ? 2 : 3}
                       value={formValues.message}
                       onChange={(e) => setFormValues((v) => ({ ...v, message: e.target.value }))}
                       required
-                      className="w-full resize-none border-b border-foreground/18 bg-transparent pb-6 font-mono text-[clamp(1.02rem,1.8vw,1.45rem)] leading-[1.35] tracking-[0.02em] text-foreground/56 outline-none transition-colors duration-300 placeholder:text-foreground/40 focus:border-gold"
+                      className="w-full resize-none border-b border-foreground/18 bg-transparent pb-3.5 font-mono text-[clamp(0.88rem,2.05vw,1.15rem)] leading-[1.34] tracking-[0.02em] text-foreground/56 outline-none transition-colors duration-300 placeholder:text-foreground/40 focus:border-gold"
                       placeholder="Raccontami il tuo progetto in 2 righe..."
                     />
                   </label>
@@ -255,7 +274,7 @@ const Index = () => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="mt-6 inline-flex w-full items-center justify-between border border-gold/45 px-8 py-5 font-mono text-[clamp(0.92rem,1.35vw,1.15rem)] uppercase tracking-[0.2em] text-gold transition-colors duration-300 hover:border-gold hover:text-foreground sm:w-[28rem]"
+                    className="mt-4 inline-flex w-full items-center justify-between border border-gold/45 px-5 py-3 font-mono text-[clamp(0.74rem,1.45vw,0.95rem)] uppercase tracking-[0.15em] text-gold transition-colors duration-300 hover:border-gold hover:text-foreground sm:mt-5 sm:w-[22rem] sm:px-6 sm:py-4 sm:tracking-[0.18em]"
                   >
                     <span>{isSubmitting ? "Invio in corso..." : "Invia messaggio"}</span>
                     <span className="text-ember">-&gt;</span>
@@ -285,7 +304,7 @@ const Index = () => {
               )}
             </form>
 
-            <footer className="mt-12 flex flex-wrap items-end justify-between gap-4 border-t border-transparent pt-6 font-mono text-[clamp(0.82rem,1.05vw,1rem)] uppercase tracking-[0.22em] text-gold/88">
+            <footer className="mt-7 flex flex-wrap items-end justify-between gap-3 border-t border-transparent pt-3.5 font-mono text-[clamp(0.62rem,1.05vw,0.84rem)] uppercase tracking-[0.12em] text-gold/88 sm:mt-10 sm:gap-4 sm:pt-5 sm:tracking-[0.18em]">
               <span>&copy; 2026 . Studio Notturno</span>
               <span>Disponibile . 2026</span>
             </footer>
@@ -300,7 +319,7 @@ const Index = () => {
       </header>
 
       {/* Top-right status */}
-      <div className="fixed right-6 top-6 z-40 font-mono text-[10px] tracking-mono-xwide text-muted-foreground sm:text-xs">
+      <div className="fixed right-6 top-6 z-40 hidden font-mono text-[10px] tracking-mono-xwide text-muted-foreground sm:block sm:text-xs">
         <span className="text-gold">●</span> <span>DISPONIBILE · NUOVI PROGETTI</span>
       </div>
 
@@ -384,7 +403,7 @@ const Index = () => {
 
       {/* Long page that creates scroll length */}
       <main className="relative z-10" aria-hidden="true">
-        <div style={{ height: "760vh" }} />
+        <div style={{ height: isMobile ? "460vh" : "760vh" }} />
       </main>
     </>
   );

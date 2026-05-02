@@ -11,12 +11,19 @@ import { mapRange } from "@/utils/mapRange";
 interface SceneProps {
   scrollRef: React.MutableRefObject<number>;
   opacity?: number;
+  isMobile?: boolean;
 }
 
 /**
  * Cinematic camera rig — pulls in toward desk, then tilts to focus on screen.
  */
-const CameraRig = ({ scrollRef }: { scrollRef: React.MutableRefObject<number> }) => {
+const CameraRig = ({
+  scrollRef,
+  isMobile = false,
+}: {
+  scrollRef: React.MutableRefObject<number>;
+  isMobile?: boolean;
+}) => {
   useFrame(({ camera }) => {
     const s = scrollRef.current;
 
@@ -27,29 +34,36 @@ const CameraRig = ({ scrollRef }: { scrollRef: React.MutableRefObject<number> })
     let z: number, y: number, tiltX: number, fov: number;
 
     if (s < 0.4) {
-      z = mapRange(s, 0, 0.4, 5.2, 2.6);
-      y = mapRange(s, 0, 0.4, 1.6, 0.95);
-      tiltX = mapRange(s, 0, 0.4, -0.18, -0.05);
-      fov = 38;
+      z = mapRange(s, 0, 0.4, isMobile ? 5.8 : 5.2, isMobile ? 3.1 : 2.6);
+      y = mapRange(s, 0, 0.4, isMobile ? 1.78 : 1.6, isMobile ? 1.02 : 0.95);
+      tiltX = mapRange(s, 0, 0.4, -0.18, isMobile ? -0.07 : -0.05);
+      fov = isMobile ? 44 : 38;
     } else if (s < 0.92) {
-      z = mapRange(s, 0.4, 0.92, 2.6, 2.2);
-      y = mapRange(s, 0.4, 0.92, 0.95, 0.98);
-      tiltX = mapRange(s, 0.4, 0.92, -0.05, -0.02);
-      fov = 36;
+      z = mapRange(s, 0.4, 0.92, isMobile ? 3.1 : 2.6, isMobile ? 2.7 : 2.2);
+      y = mapRange(s, 0.4, 0.92, isMobile ? 1.02 : 0.95, isMobile ? 1.06 : 0.98);
+      tiltX = mapRange(s, 0.4, 0.92, isMobile ? -0.07 : -0.05, isMobile ? -0.03 : -0.02);
+      fov = isMobile ? 42 : 36;
     } else if (s < 0.98) {
       // Fast punch-in starts only after laptop manifesto frame
       const k = Math.max(0, Math.min(1, (s - 0.92) / 0.06));
       const eased = k * k * k; // cubic ease-in — starts slow, slams in
-      z = 2.2 + (1.35 - 2.2) * eased;
-      y = 0.98 + (1.02 - 0.98) * eased;
-      tiltX = -0.02 + (0.0 - -0.02) * eased;
-      fov = 36 + (28 - 36) * eased;
+      const z0 = isMobile ? 2.7 : 2.2;
+      const z1 = isMobile ? 2.15 : 1.35;
+      const y0 = isMobile ? 1.06 : 0.98;
+      const y1 = isMobile ? 1.09 : 1.02;
+      const t0 = isMobile ? -0.03 : -0.02;
+      const f0 = isMobile ? 42 : 36;
+      const f1 = isMobile ? 36 : 28;
+      z = z0 + (z1 - z0) * eased;
+      y = y0 + (y1 - y0) * eased;
+      tiltX = t0 + (0.0 - t0) * eased;
+      fov = f0 + (f1 - f0) * eased;
     } else {
       // End state: stay pushed in
-      z = 1.35;
-      y = 1.02;
+      z = isMobile ? 2.15 : 1.35;
+      y = isMobile ? 1.09 : 1.02;
       tiltX = 0;
-      fov = 28;
+      fov = isMobile ? 36 : 28;
     }
 
     // Lerp factor: much higher during zoom phase for snappiness, normal otherwise
@@ -70,12 +84,17 @@ const CameraRig = ({ scrollRef }: { scrollRef: React.MutableRefObject<number> })
   return null;
 };
 
-export const Scene = ({ scrollRef, opacity = 1 }: SceneProps) => {
+export const Scene = ({ scrollRef, opacity = 1, isMobile = false }: SceneProps) => {
   return (
     <Canvas
       shadows
-      dpr={[1, 1.25]}
-      camera={{ position: [0, 1.6, 5.2], fov: 38, near: 0.1, far: 50 }}
+      dpr={isMobile ? [1, 1.15] : [1, 1.25]}
+      camera={{
+        position: [0, isMobile ? 1.78 : 1.6, isMobile ? 5.8 : 5.2],
+        fov: isMobile ? 44 : 38,
+        near: 0.1,
+        far: 50,
+      }}
       gl={{ antialias: true, powerPreference: "high-performance" }}
       style={{ position: "fixed", inset: 0, opacity }}
     >
@@ -100,10 +119,10 @@ export const Scene = ({ scrollRef, opacity = 1 }: SceneProps) => {
       <Suspense fallback={null}>
         <Desk />
         <Laptop scrollRef={scrollRef} />
-        <Dust count={100} />
+        <Dust count={isMobile ? 55 : 100} />
       </Suspense>
 
-      <CameraRig scrollRef={scrollRef} />
+      <CameraRig scrollRef={scrollRef} isMobile={isMobile} />
 
       <EffectComposer multisampling={0}>
         <Bloom intensity={0.45} luminanceThreshold={0.72} luminanceSmoothing={0.22} />
