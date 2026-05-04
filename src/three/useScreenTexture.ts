@@ -7,18 +7,11 @@ const SCREEN_H = 1000;
 
 interface ScreenTextureOptions {
   projects: Project[];
-  /** Ref to global scroll progress 0..1 */
   scrollRef: React.MutableRefObject<number>;
-  /** Scroll range where the laptop opens (light only, no slideshow yet) */
   openingRange: [number, number];
-  /** Scroll range where the slideshow plays sequentially (no loop) */
   slideshowRange: [number, number];
-  /** Scroll range where the "value proposition" pitch screen plays */
   pitchRange: [number, number];
-  /** After this scroll the screen content is replaced by the HTML overlay,
-   *  so we can stop drawing project frames. */
   fadeOutAt: number;
-  /** Optional perf hint to reduce refresh rate. */
   lowPower?: boolean;
 }
 
@@ -26,14 +19,6 @@ interface LoadedAssets {
   screenshots: HTMLImageElement[];
 }
 
-/**
- * Builds a CanvasTexture for the laptop's display.
- * Sequence (no loop):
- *   openingRange   : dark "boot" + brand logo
- *   slideshowRange : project screenshots one after the other (LDS → DDP)
- *   pitchRange     : value proposition pitch ("Sito su misura per il tuo business")
- *   > fadeOutAt    : screen fades to deep black so the HTML overlay can take over
- */
 export function useScreenTexture({
   projects,
   scrollRef,
@@ -128,9 +113,7 @@ export function useScreenTexture({
 
     /* ---------- A. opening / boot ---------- */
     const renderOpening = (k: number) => {
-      // k: 0 = closed (won't be visible), 1 = fully open
       clearBg();
-      // Soft brand mark fading in
       const a = smoothstep(k);
       ctx.save();
       ctx.globalAlpha = a;
@@ -148,36 +131,29 @@ export function useScreenTexture({
     };
 
     /* ---------- B. sequential slideshow (no loop) ----------
-     * Splits slideshowRange into N equal slots, one per project.
-     * Inside each slot: short fade-in, hold, short fade-out.
+     * fade in (0..0.2) → hold (0.2..0.8) → fade out (0.8..1)
+     * hold ridotto dal 80% al 60% per immagine → transizioni più rapide
      */
     const renderSlideshow = (s: number) => {
       const [s0, s1] = slideshowRange;
-      const local = (s - s0) / (s1 - s0); // 0..1
+      const local = (s - s0) / (s1 - s0);
       const N = projects.length;
       const slot = 1 / N;
       const idxF = local / slot;
       const idx = Math.max(0, Math.min(N - 1, Math.floor(idxF)));
-      const within = idxF - idx; // 0..1 inside this project's slot
+      const within = idxF - idx;
 
-      // fade curve inside slot: in (0..0.1) hold (0.1..0.9) out (0.9..1)
+      // ← modificato: 0.1/0.9 → 0.2/0.8 (hold più breve, transizioni più veloci)
       let alpha = 1;
-      if (within < 0.1) alpha = smoothstep(within / 0.1);
-      else if (within > 0.9) alpha = smoothstep((1 - within) / 0.1);
+      if (within < 0.2) alpha = smoothstep(within / 0.2);
+      else if (within > 0.8) alpha = smoothstep((1 - within) / 0.2);
 
       clearBg();
-
       const img = assets.screenshots[idx];
       if (img) drawContain(img, 0, 0, SCREEN_W, SCREEN_H, alpha);
-
     };
 
     /* ---------- C. value proposition pitch ---------- */
-    const pitchLines = [
-      { gold: "—", text: "UN SITO COSTRUITO" },
-      { gold: null, text: "su misura per il" },
-      { gold: null, text: "tuo business." },
-    ];
     const pitchPoints = [
       "Ogni progetto nasce da strategia e ricerca",
       "Ogni scelta è guidata da obiettivi di business",
@@ -188,7 +164,6 @@ export function useScreenTexture({
     const renderPitch = (k: number) => {
       clearBg();
 
-      // Subtle gold radial glow
       const grad = ctx.createRadialGradient(
         SCREEN_W * 0.7,
         SCREEN_H * 0.4,
@@ -208,13 +183,11 @@ export function useScreenTexture({
       ctx.globalAlpha = ease;
       ctx.translate(0, -yOffset);
 
-      // Eyebrow
       ctx.fillStyle = "#C8A96E";
       ctx.font = "300 22px 'DM Mono', monospace";
       ctx.textBaseline = "alphabetic";
       ctx.fillText("— LA PROPOSTA", 80, 140);
 
-      // Headline (large serif)
       ctx.fillStyle = "#F0EBE1";
       ctx.font = "300 110px 'Cormorant Garamond', serif";
       ctx.fillText("Il sito web", 80, 280);
@@ -224,7 +197,6 @@ export function useScreenTexture({
       ctx.font = "italic 300 110px 'Cormorant Garamond', serif";
       ctx.fillText("per il tuo business.", 80, 520);
 
-      // Bullets
       ctx.fillStyle = "#1a1814";
       ctx.font = "300 24px 'Fraunces', serif";
       pitchPoints.forEach((p, i) => {
@@ -232,11 +204,10 @@ export function useScreenTexture({
         ctx.fillStyle = "#C8A96E";
         ctx.fillText("·", 80, yy);
         ctx.fillStyle = "#cfc7b8";
-        ctx.font = "300 36px 'Fraunces', serif"; // <-- più grande per il testo
+        ctx.font = "300 36px 'Fraunces', serif";
         ctx.fillText(p, 110, yy);
       });
 
-      // CTA hint
       ctx.restore();
     };
 
@@ -254,19 +225,16 @@ export function useScreenTexture({
       const [s0, s1] = slideshowRange;
       const [p0, p1] = pitchRange;
 
-      // Global fade-out as we approach fullscreen handoff
       const out = s >= fadeOutAt ? 1 : 0;
 
       if (s < o1) {
         const k = (s - o0) / (o1 - o0);
         renderOpening(k);
       } else if (s < s0) {
-        // brief gap → keep opening final state
         renderOpening(1);
       } else if (s < s1) {
         renderSlideshow(s);
       } else if (s < p0) {
-        // hold last slideshow frame (won't be visible long)
         renderSlideshow(s1 - 0.0001);
       } else if (s < p1) {
         const k = (s - p0) / (p1 - p0);
