@@ -133,7 +133,7 @@ export const Scene = ({ scrollRef }: SceneProps) => {
 
       <CameraFlight scrollRef={scrollRef} />
 
-      <EffectComposer multisampling={0} enableNormalPass={false}>
+      <EffectComposer multisampling={tier === "low" ? 2 : 4} enableNormalPass={false}>
         {!disableFx ? (
           <>
             <Bloom
