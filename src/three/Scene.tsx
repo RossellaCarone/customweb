@@ -1,7 +1,7 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Suspense } from "react";
 import * as THREE from "three";
-import { EffectComposer, Bloom, Vignette, Noise, FXAA } from "@react-three/postprocessing";
+import { EffectComposer, Bloom, Vignette, Noise } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
 import { Laptop } from "./Laptop";
 import { Desk } from "./Desk";
@@ -81,14 +81,18 @@ const CameraFlight = ({ scrollRef }: { scrollRef: React.MutableRefObject<number>
       fov = 38;
     }
 
+    const aspect = size.width / size.height;
+    const portraitBoost = aspect < 1 ? mapRange(aspect, 1, 0.55, 0, 1) : 0;
+    const portraitZOffset = portraitBoost * 2.2;
+    const portraitFovOffset = portraitBoost * 14;
+
     camera.position.x = THREE.MathUtils.lerp(camera.position.x, px, cameraLerp);
     camera.position.y = THREE.MathUtils.lerp(camera.position.y, py, cameraLerp);
-    camera.position.z = THREE.MathUtils.lerp(camera.position.z, pz, cameraLerp);
+    camera.position.z = THREE.MathUtils.lerp(camera.position.z, pz + portraitZOffset, cameraLerp);
     camera.rotation.x = THREE.MathUtils.lerp(camera.rotation.x, rx, cameraLerp);
     camera.rotation.y = THREE.MathUtils.lerp(camera.rotation.y, ry, cameraLerp);
     const cam = camera as THREE.PerspectiveCamera;
-    const aspect = size.width / size.height;
-    const targetFov = aspect < 1 ? (fov / Math.max(aspect, 0.55)) * 0.7 : fov;
+    const targetFov = fov + portraitFovOffset;
     cam.fov = THREE.MathUtils.lerp(cam.fov, targetFov, cameraLerp);
     cam.updateProjectionMatrix();
   });
@@ -97,12 +101,14 @@ const CameraFlight = ({ scrollRef }: { scrollRef: React.MutableRefObject<number>
 
 export const Scene = ({ scrollRef }: SceneProps) => {
   const tier = usePerfTier();
+  const isMobile =
+    typeof navigator !== "undefined" && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   const disableFx = scrollRef.current > 0.78;
 
   return (
     <Canvas
       shadows={tier === "high"}
-      dpr={tier === "low" ? [1, 1.85] : [1, 2]}
+      dpr={tier === "low" ? (isMobile ? [1.15, 2.25] : [1, 1.75]) : [1, 2]}
       camera={{ position: [0, 1.6, 5.2], fov: 38, near: 0.1, far: 80 }}
       gl={{ antialias: true, powerPreference: "high-performance" }}
       style={{ position: "fixed", inset: 0 }}
@@ -144,7 +150,6 @@ export const Scene = ({ scrollRef }: SceneProps) => {
               luminanceSmoothing={0.4}
               mipmapBlur
             />
-            {tier === "low" && <FXAA />}
             {tier === "high" && <Noise opacity={0.012} blendFunction={BlendFunction.OVERLAY} />}
             <Vignette eskil={false} offset={0.18} darkness={0.9} />
           </>
