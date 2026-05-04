@@ -79,7 +79,7 @@
   }
 
   .dark {
-    /* Studio Notturno is already dark. Keep parity. */
+    /* Custom Web  is already dark. Keep parity. */
     --background: 240 22% 5%;
     --foreground: 36 38% 91%;
     --card: 240 18% 8%;
@@ -180,95 +180,13 @@
 }
 .fade-up { animation: fade-up 0.8s var(--ease-soft) both; }
 
-@keyframes gold-pulse {
-  0%, 100% { text-shadow: 0 0 0 rgba(200, 169, 110, 0); }
-  50% { text-shadow: 0 0 24px rgba(200, 169, 110, 0.42); }
+@keyframes slow-pan {
+  0%   { transform: translateY(0%); }
+  50%  { transform: translateY(-50%); }
+  100% { transform: translateY(0%); }
 }
 
-@keyframes float-soft {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-
-.animate-gold-pulse {
-  animation: gold-pulse 2.8s ease-in-out infinite;
-}
-
-.animate-float-soft {
-  animation: float-soft 5.5s ease-in-out infinite;
-}
-
-@keyframes contact-particle {
-  0% { transform: translateY(0px) scale(0.9); opacity: 0; }
-  20% { opacity: 0.5; }
-  60% { opacity: 0.18; }
-  100% { transform: translateY(-28px) scale(1); opacity: 0; }
-}
-
-.contact-particle {
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  border-radius: 999px;
-  background: rgba(200, 169, 110, 0.85);
-  box-shadow: 0 0 14px rgba(200, 169, 110, 0.45);
-  animation-name: contact-particle;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-}
-
-@keyframes fade-up-soft {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-up {
-  animation: fade-up-soft 0.34s ease-out both;
-}
-
-.contact-title {
-  perspective: 600px;
-}
-
-.contact-line {
-  display: inline-block;
-  transition: transform 420ms var(--ease-soft), text-shadow 420ms ease;
-  transform-origin: left center;
-  will-change: transform;
-}
-
-.contact-line-gold {
-  transition: transform 420ms var(--ease-soft), text-shadow 420ms ease, color 320ms ease;
-}
-
-.contact-title:hover .contact-line {
-  transform: translateX(2px) translateY(-1px);
-  text-shadow: 0 8px 28px rgba(240, 235, 225, 0.14);
-}
-
-.contact-title:hover .contact-line-gold {
-  transform: translateX(3px) translateY(-1px);
-  text-shadow: 0 0 18px rgba(200, 169, 110, 0.34);
-}
-
-.contact-lead {
-  transition: transform 360ms var(--ease-soft), text-shadow 360ms ease;
-  transform-origin: left center;
-}
-
-.contact-lead:hover {
-  transform: translateX(2px);
-  text-shadow: 0 0 16px rgba(240, 235, 225, 0.16);
-}
-
-.contact-link-motion {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  transition: transform 260ms var(--ease-soft), text-shadow 260ms ease;
-}
-
-.contact-link-motion:hover {
-  transform: translateX(2px);
-  text-shadow: 0 0 14px rgba(200, 169, 110, 0.24);
+@keyframes drift {
+  0%, 100% { transform: translateY(0); opacity: 0.3; }
+  50%      { transform: translateY(80%); opacity: 1; }
 }
