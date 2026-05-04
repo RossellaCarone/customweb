@@ -1,5 +1,5 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Suspense, useRef } from "react";
+import { Suspense, useRef, useState } from "react";
 import * as THREE from "three";
 import { EffectComposer, Bloom, Vignette, Noise } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
@@ -16,18 +16,65 @@ interface SceneProps {
   scrollRef: React.MutableRefObject<number>;
 }
 
-/**
- * Camera flight along a single continuous path through one 3D world:
- *   0.00 – 0.10  Wide shot of the atelier (laptop on desk)
- *   0.10 – 0.40  Closes in on the laptop screen (slideshow inside)
- *   0.40 – 0.50  Holds on the pitch screen
- *   0.50 – 0.58  Camera flies INTO the screen, through the portal arch
- *   0.58 – 0.88  Camera advances through the project monolith sequence
- *   0.90 – 1.00  Camera glides toward the contact panel
- */
+// ── Detect mobile once, outside components ──────────────────────────────────
+const IS_MOBILE =
+  typeof navigator !== "undefined" &&
+  /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+// ── FX gate: reads scroll every frame and disables post-processing reactively ─
+const FxGate = ({
+  scrollRef,
+  tier,
+}: {
+  scrollRef: React.MutableRefObject<number>;
+  tier: string;
+}) => {
+  // On mobile low-tier skip entirely
+  if (IS_MOBILE && tier === "low") return <></>;
+
+  return (
+    <_FxGateInner scrollRef={scrollRef} tier={tier} />
+  );
+};
+
+const _FxGateInner = ({
+  scrollRef,
+  tier,
+}: {
+  scrollRef: React.MutableRefObject<number>;
+  tier: string;
+}) => {
+  const [fxEnabled, setFxEnabled] = useState(true);
+
+  useFrame(() => {
+    const shouldEnable = scrollRef.current <= 0.78;
+    if (shouldEnable !== fxEnabled) setFxEnabled(shouldEnable);
+  });
+
+  return (
+    <EffectComposer multisampling={0} enableNormalPass={false}>
+      {fxEnabled ? (
+        <>
+          <Bloom
+            intensity={tier === "high" ? 0.38 : 0.24}
+            luminanceThreshold={0.78}
+            luminanceSmoothing={0.4}
+            mipmapBlur
+          />
+          {tier === "high" && !IS_MOBILE && (
+            <Noise opacity={0.012} blendFunction={BlendFunction.OVERLAY} />
+          )}
+          <Vignette eskil={false} offset={0.18} darkness={0.9} />
+        </>
+      ) : (
+        <></>
+      )}
+    </EffectComposer>
+  );
+};
+
+// ── Camera (invariato, solo estratto IS_MOBILE) ─────────────────────────────
 const CameraFlight = ({ scrollRef }: { scrollRef: React.MutableRefObject<number> }) => {
-  const isMobile =
-    typeof navigator !== "undefined" && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   const wasPortraitRef = useRef<boolean | null>(null);
 
   useFrame(({ camera, size }) => {
@@ -37,26 +84,22 @@ const CameraFlight = ({ scrollRef }: { scrollRef: React.MutableRefObject<number>
     let cameraLerp = 0.07;
 
     if (s < 0.4) {
-      // approach + zoom on laptop
       pz = mapRange(s, 0, 0.4, 5.2, 2.7);
       py = mapRange(s, 0, 0.4, 1.6, 1.0);
       rx = mapRange(s, 0, 0.4, -0.18, -0.04);
     } else if (s < 0.5) {
-      // hold on pitch screen
       const k = (s - 0.4) / 0.1;
       const e = k * k * (3 - 2 * k);
       pz = 2.7 + (2.0 - 2.7) * e;
       py = 1.0;
       rx = -0.04 + (0.0 - -0.04) * e;
     } else if (s < 0.58) {
-      // FLY THROUGH the portal — camera dives into screen / arch
       const k = (s - 0.5) / 0.08;
       const e = k * k * (3 - 2 * k);
-      pz = 2.0 + (-9.5 - 2.0) * e; // accelerate forward
+      pz = 2.0 + (-9.5 - 2.0) * e;
       py = 1.0 + (1.6 - 1.0) * e;
       rx = 0;
     } else if (s < 0.88) {
-      // project stage: hold on each project longer before moving to the next
       cameraLerp = 0.045;
       const k = (s - 0.58) / 0.30;
       if (k < 0.38) {
@@ -75,7 +118,6 @@ const CameraFlight = ({ scrollRef }: { scrollRef: React.MutableRefObject<number>
       ry = 0;
       fov = 46;
     } else {
-      // enter the contact section already at max zoom, then just glide in
       const k = (s - 0.88) / 0.12;
       const e = k * k * (3 - 2 * k);
       pz = -22.0 + (-28.2 - -22.0) * e;
@@ -87,11 +129,12 @@ const CameraFlight = ({ scrollRef }: { scrollRef: React.MutableRefObject<number>
 
     const aspect = size.width / size.height;
     const isPortrait = aspect < 1;
-    const orientationChanged = wasPortraitRef.current !== null && wasPortraitRef.current !== isPortrait;
+    const orientationChanged =
+      wasPortraitRef.current !== null && wasPortraitRef.current !== isPortrait;
     wasPortraitRef.current = isPortrait;
     const portraitBoost = aspect < 1 ? mapRange(aspect, 1, 0.55, 0, 1) : 0;
     const contactProgress = mapRange(s, 0.88, 1, 0, 1);
-    const contactMobileZoom = isMobile && aspect < 1 ? portraitBoost * contactProgress : 0;
+    const contactMobileZoom = IS_MOBILE && aspect < 1 ? portraitBoost * contactProgress : 0;
     const portraitZOffset = portraitBoost * 2.2;
     const portraitFovOffset = portraitBoost * 14;
     const contactMobileZOffset = contactMobileZoom * -1.9;
@@ -115,24 +158,40 @@ const CameraFlight = ({ scrollRef }: { scrollRef: React.MutableRefObject<number>
   return null;
 };
 
+// ── Scene ───────────────────────────────────────────────────────────────────
 export const Scene = ({ scrollRef }: SceneProps) => {
   const tier = usePerfTier();
-  const isMobile =
-    typeof navigator !== "undefined" && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const disableFx = scrollRef.current > 0.78;
+
+  // DPR: molto più conservativo su mobile
+  const dpr: [number, number] = IS_MOBILE
+    ? tier === "low"
+      ? [1, 1.2]   // telefoni entry-level
+      : [1, 1.5]   // telefoni mid/high
+    : tier === "low"
+    ? [1, 1.75]
+    : [1, 2];
+
+  // Le ombre costano moltissimo su mobile — mai abilitarle
+  const castShadows = tier === "high" && !IS_MOBILE;
+
+  // Fog più vicina su mobile (meno geometria da renderizzare)
+  const fogFar = IS_MOBILE ? 35 : 50;
 
   return (
     <Canvas
-      shadows={tier === "high"}
-      dpr={tier === "low" ? (isMobile ? [1.15, 2.25] : [1, 1.75]) : [1, 2]}
+      shadows={castShadows}
+      dpr={dpr}
       camera={{ position: [0, 1.6, 5.2], fov: 38, near: 0.1, far: 80 }}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
+      gl={{
+        antialias: !IS_MOBILE, // antialias disabilitato su mobile (costoso)
+        powerPreference: "high-performance",
+      }}
       style={{ position: "fixed", inset: 0 }}
     >
       <color attach="background" args={["#06060A"]} />
-      <fog attach="fog" args={["#06060A", 8, 50]} />
+      <fog attach="fog" args={["#06060A", 8, fogFar]} />
 
-      {/* Key warm light — desk lamp */}
+      {/* Lamp — shadow solo su desktop high */}
       <spotLight
         position={[2.8, 4, 2]}
         angle={0.55}
@@ -140,8 +199,8 @@ export const Scene = ({ scrollRef }: SceneProps) => {
         intensity={28}
         color="#ffd9a8"
         distance={14}
-        castShadow={tier === "high"}
-        shadow-mapSize={[1024, 1024]}
+        castShadow={castShadows}
+        shadow-mapSize={[512, 512]} // ← ridotto da 1024
       />
       <ambientLight intensity={0.18} color="#7080a8" />
       <hemisphereLight args={["#3a3a55", "#0a0a0f", 0.25]} />
@@ -152,27 +211,12 @@ export const Scene = ({ scrollRef }: SceneProps) => {
         <Laptop scrollRef={scrollRef} />
         <ProjectMonoliths scrollRef={scrollRef} range={[0.58, 0.88]} />
         <ContactObelisk scrollRef={scrollRef} range={[0.88, 1.0]} />
-        <Fireflies tier={tier} />
+        {/* Fireflies ridotte su mobile */}
+        {(!IS_MOBILE || tier !== "low") && <Fireflies tier={tier} />}
       </Suspense>
 
       <CameraFlight scrollRef={scrollRef} />
-
-      <EffectComposer multisampling={0} enableNormalPass={false}>
-        {!disableFx ? (
-          <>
-            <Bloom
-              intensity={tier === "high" ? 0.38 : 0.24}
-              luminanceThreshold={0.78}
-              luminanceSmoothing={0.4}
-              mipmapBlur
-            />
-            {tier === "high" && <Noise opacity={0.012} blendFunction={BlendFunction.OVERLAY} />}
-            <Vignette eskil={false} offset={0.18} darkness={0.9} />
-          </>
-        ) : (
-          <></>
-        )}
-      </EffectComposer>
+      <FxGate scrollRef={scrollRef} tier={tier} />
     </Canvas>
   );
 };
