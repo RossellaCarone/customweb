@@ -90,8 +90,8 @@ const CameraFlight = ({ scrollRef }: { scrollRef: React.MutableRefObject<number>
     const contactMobileZoom = isMobile && aspect < 1 ? portraitBoost * contactProgress : 0;
     const portraitZOffset = portraitBoost * 2.2;
     const portraitFovOffset = portraitBoost * 14;
-    const contactMobileZOffset = contactMobileZoom * -2.3;
-    const contactMobileFovOffset = contactMobileZoom * -13;
+    const contactMobileZOffset = contactMobileZoom * -1.9;
+    const contactMobileFovOffset = contactMobileZoom * -10.5;
 
     camera.position.x = THREE.MathUtils.lerp(camera.position.x, px, cameraLerp);
     camera.position.y = THREE.MathUtils.lerp(camera.position.y, py, cameraLerp);
