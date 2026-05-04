@@ -100,7 +100,7 @@ export const Scene = ({ scrollRef }: SceneProps) => {
   return (
     <Canvas
       shadows={tier === "high"}
-      dpr={tier === "low" ? [1, 1.1] : [1, 1.45]}
+      dpr={tier === "low" ? [1, 1.5] : [1, 2]}
       camera={{ position: [0, 1.6, 5.2], fov: 38, near: 0.1, far: 80 }}
       gl={{ antialias: tier === "high", powerPreference: "high-performance" }}
       style={{ position: "fixed", inset: 0 }}
@@ -142,7 +142,7 @@ export const Scene = ({ scrollRef }: SceneProps) => {
               luminanceSmoothing={0.4}
               mipmapBlur
             />
-            <Noise opacity={tier === "high" ? 0.012 : 0.006} blendFunction={BlendFunction.OVERLAY} />
+            {tier === "high" && <Noise opacity={0.012} blendFunction={BlendFunction.OVERLAY} />}
             <Vignette eskil={false} offset={0.18} darkness={0.9} />
           </>
         ) : (
