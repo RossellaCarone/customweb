@@ -1,6 +1,7 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Suspense, useRef, useState } from "react";
 import * as THREE from "three";
+import { AdaptiveDpr, AdaptiveEvents } from "@react-three/drei";
 import { EffectComposer, Bloom, Vignette, Noise } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
 import { Laptop } from "./Laptop";
@@ -16,12 +17,11 @@ interface SceneProps {
   scrollRef: React.MutableRefObject<number>;
 }
 
-// Calcolato una volta sola a livello di modulo
 const IS_MOBILE =
   typeof navigator !== "undefined" &&
   /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-// ── Post-processing: si abilita/disabilita reattivamente allo scroll ─────────
+// ── Post-processing ──────────────────────────────────────────────────────────
 const FxGate = ({
   scrollRef,
   tier,
@@ -29,7 +29,6 @@ const FxGate = ({
   scrollRef: React.MutableRefObject<number>;
   tier: string;
 }) => {
-  // Su mobile low non montiamo nemmeno il composer
   if (IS_MOBILE && tier === "low") return null;
   return <FxGateInner scrollRef={scrollRef} tier={tier} />;
 };
@@ -129,11 +128,11 @@ const CameraFlight = ({ scrollRef }: { scrollRef: React.MutableRefObject<number>
     const orientationChanged =
       wasPortraitRef.current !== null && wasPortraitRef.current !== isPortrait;
     wasPortraitRef.current = isPortrait;
-    const portraitBoost       = aspect < 1 ? mapRange(aspect, 1, 0.55, 0, 1) : 0;
-    const contactProgress     = mapRange(s, 0.88, 1, 0, 1);
-    const contactMobileZoom   = IS_MOBILE && aspect < 1 ? portraitBoost * contactProgress : 0;
-    const portraitZOffset     = portraitBoost * 2.2;
-    const portraitFovOffset   = portraitBoost * 14;
+    const portraitBoost        = aspect < 1 ? mapRange(aspect, 1, 0.55, 0, 1) : 0;
+    const contactProgress      = mapRange(s, 0.88, 1, 0, 1);
+    const contactMobileZoom    = IS_MOBILE && aspect < 1 ? portraitBoost * contactProgress : 0;
+    const portraitZOffset      = portraitBoost * 2.2;
+    const portraitFovOffset    = portraitBoost * 14;
     const contactMobileZOffset  = contactMobileZoom * -1.9;
     const contactMobileFovOffset = contactMobileZoom * -10.5;
     const blend = orientationChanged ? 1 : cameraLerp;
@@ -148,7 +147,11 @@ const CameraFlight = ({ scrollRef }: { scrollRef: React.MutableRefObject<number>
     camera.rotation.x = THREE.MathUtils.lerp(camera.rotation.x, rx, blend);
     camera.rotation.y = THREE.MathUtils.lerp(camera.rotation.y, ry, blend);
     const cam = camera as THREE.PerspectiveCamera;
-    cam.fov = THREE.MathUtils.lerp(cam.fov, fov + portraitFovOffset + contactMobileFovOffset, blend);
+    cam.fov = THREE.MathUtils.lerp(
+      cam.fov,
+      fov + portraitFovOffset + contactMobileFovOffset,
+      blend
+    );
     cam.updateProjectionMatrix();
   });
 
@@ -160,17 +163,12 @@ export const Scene = ({ scrollRef }: SceneProps) => {
   const tier = usePerfTier();
 
   const castShadows = tier === "high" && !IS_MOBILE;
-
-  const dpr: [number, number] = IS_MOBILE
-    ? tier === "low" ? [1, 1.2] : [1, 1.5]
-    : tier === "low" ? [1, 1.75] : [1, 2];
-
   const fogFar = IS_MOBILE ? 35 : 50;
 
   return (
     <Canvas
       shadows={castShadows}
-      dpr={dpr}
+      dpr={[1, 2]}
       camera={{ position: [0, 1.6, 5.2], fov: 38, near: 0.1, far: 80 }}
       gl={{
         antialias: !IS_MOBILE,
@@ -178,6 +176,11 @@ export const Scene = ({ scrollRef }: SceneProps) => {
       }}
       style={{ position: "fixed", inset: 0 }}
     >
+      {/* DPR adattivo: parte da 2x e si abbassa automaticamente se l'FPS cala */}
+      <AdaptiveDpr pixelated />
+      {/* Disabilita pointer events durante il movimento per guadagnare frame */}
+      <AdaptiveEvents />
+
       <color attach="background" args={["#06060A"]} />
       <fog attach="fog" args={["#06060A", 8, fogFar]} />
 
@@ -200,7 +203,6 @@ export const Scene = ({ scrollRef }: SceneProps) => {
         <Laptop scrollRef={scrollRef} castShadows={castShadows} />
         <ProjectMonoliths scrollRef={scrollRef} range={[0.58, 0.88]} />
         <ContactObelisk scrollRef={scrollRef} range={[0.88, 1.0]} />
-        {/* Fireflies disabilitate su mobile low */}
         {(!IS_MOBILE || tier !== "low") && <Fireflies tier={tier} />}
       </Suspense>
 
