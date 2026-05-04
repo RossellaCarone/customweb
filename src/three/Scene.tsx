@@ -26,6 +26,9 @@ interface SceneProps {
  *   0.90 – 1.00  Camera glides toward the contact panel
  */
 const CameraFlight = ({ scrollRef }: { scrollRef: React.MutableRefObject<number> }) => {
+  const isMobile =
+    typeof navigator !== "undefined" && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
   useFrame(({ camera, size }) => {
     const s = scrollRef.current;
 
@@ -83,16 +86,24 @@ const CameraFlight = ({ scrollRef }: { scrollRef: React.MutableRefObject<number>
 
     const aspect = size.width / size.height;
     const portraitBoost = aspect < 1 ? mapRange(aspect, 1, 0.55, 0, 1) : 0;
+    const contactProgress = mapRange(s, 0.88, 1, 0, 1);
+    const contactMobileZoom = isMobile && aspect < 1 ? portraitBoost * contactProgress : 0;
     const portraitZOffset = portraitBoost * 2.2;
     const portraitFovOffset = portraitBoost * 14;
+    const contactMobileZOffset = contactMobileZoom * -2.5;
+    const contactMobileFovOffset = contactMobileZoom * -14;
 
     camera.position.x = THREE.MathUtils.lerp(camera.position.x, px, cameraLerp);
     camera.position.y = THREE.MathUtils.lerp(camera.position.y, py, cameraLerp);
-    camera.position.z = THREE.MathUtils.lerp(camera.position.z, pz + portraitZOffset, cameraLerp);
+    camera.position.z = THREE.MathUtils.lerp(
+      camera.position.z,
+      pz + portraitZOffset + contactMobileZOffset,
+      cameraLerp
+    );
     camera.rotation.x = THREE.MathUtils.lerp(camera.rotation.x, rx, cameraLerp);
     camera.rotation.y = THREE.MathUtils.lerp(camera.rotation.y, ry, cameraLerp);
     const cam = camera as THREE.PerspectiveCamera;
-    const targetFov = fov + portraitFovOffset;
+    const targetFov = fov + portraitFovOffset + contactMobileFovOffset;
     cam.fov = THREE.MathUtils.lerp(cam.fov, targetFov, cameraLerp);
     cam.updateProjectionMatrix();
   });

@@ -39,9 +39,6 @@ const Index = () => {
   // Filosofia visible during opening + slideshow only
   const quoteOpacity =
     mapRange(progress, 0.14, 0.2, 0, 1) * mapRange(progress, 0.3, 0.36, 1, 0);
-  const quoteMobileLift = mapRange(progress, 0.14, 0.36, 0, 1) * -22;
-  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const contactOverlayOpacity = mapRange(progress, 0.88, 0.94, 0, 1);
 
   return (
     <>
@@ -90,11 +87,12 @@ const Index = () => {
 
       {/* Filosofia quote */}
       <aside
-        className="pointer-events-none fixed left-6 top-1/2 z-30 max-w-xs -translate-y-1/2 sm:left-12 md:max-w-sm lg:left-20"
-        style={{
-          opacity: quoteOpacity,
-          top: isMobile ? `${50 + quoteMobileLift}%` : undefined,
-        }}
+        className={`pointer-events-none fixed z-30 ${
+          portraitMobile
+            ? "left-1/2 top-[28%] max-w-[84vw] -translate-x-1/2 text-center"
+            : "left-6 top-1/2 max-w-xs -translate-y-1/2 sm:left-12 md:max-w-sm lg:left-20"
+        }`}
+        style={{ opacity: quoteOpacity }}
       >
         <p className="font-narrative text-xl italic leading-snug text-foreground/90 sm:text-2xl md:text-3xl">
           Un sito non si guarda.
@@ -102,22 +100,6 @@ const Index = () => {
           <span className="text-gold">Si vive.</span>
         </p>
       </aside>
-
-      <section
-        className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center px-6 text-center"
-        style={{ opacity: contactOverlayOpacity }}
-      >
-        <div className="w-full max-w-4xl">
-          <p className="mb-4 font-mono text-[10px] uppercase tracking-mono-xwide text-gold sm:text-xs">
-            — PARLIAMONE —
-          </p>
-          <h2 className="font-display text-[12vw] font-light leading-[0.9] tracking-tight text-foreground sm:text-[9vw] md:text-[7vw] lg:text-[5.6rem]">
-            Hai un progetto
-            <br />
-            <em className="font-narrative italic text-gold">in mente?</em>
-          </h2>
-        </div>
-      </section>
 
       {/* Long page that creates scroll length */}
       <main className="relative z-10 pointer-events-none" aria-hidden="true">

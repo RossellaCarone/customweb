@@ -115,7 +115,7 @@ export const Preloader = ({
               Ruota lo schermo
             </p>
             <p className="mt-1 font-mono text-[10px] tracking-mono-wide text-muted-foreground">
-              per la migliore esperienza
+              per una migliore esperienza
             </p>
           </div>
         )}

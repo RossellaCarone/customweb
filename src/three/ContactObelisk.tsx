@@ -66,7 +66,6 @@ function drawPanel(
   ctx.font = "300 42px 'Fraunces', serif";
   ctx.fillText("Racconta la tua idea", w / 2, 720);
 
-
   if (form.status === "success") {
     // success state
     ctx.fillStyle = "#C8A96E";
