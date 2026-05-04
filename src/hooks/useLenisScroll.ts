@@ -29,8 +29,27 @@ export function useLenisScroll() {
     };
     lenis.on("scroll", onScroll);
 
+    let resizeRaf = 0;
+    const restoreFrameOnResize = () => {
+      const savedProgress = progressRef.current;
+      cancelAnimationFrame(resizeRaf);
+      resizeRaf = requestAnimationFrame(() => {
+        const limit =
+          (lenis as unknown as { limit?: number }).limit ??
+          Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+        const targetY = Math.max(0, Math.min(limit, savedProgress * limit));
+        lenis.scrollTo(targetY, { immediate: true, force: true });
+      });
+    };
+
+    window.addEventListener("resize", restoreFrameOnResize);
+    window.addEventListener("orientationchange", restoreFrameOnResize);
+
     return () => {
       cancelAnimationFrame(rafId);
+      cancelAnimationFrame(resizeRaf);
+      window.removeEventListener("resize", restoreFrameOnResize);
+      window.removeEventListener("orientationchange", restoreFrameOnResize);
       lenis.destroy();
     };
   }, []);
