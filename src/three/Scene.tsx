@@ -1,7 +1,7 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Suspense } from "react";
 import * as THREE from "three";
-import { EffectComposer, Bloom, Vignette, Noise } from "@react-three/postprocessing";
+import { EffectComposer, Bloom, Vignette, Noise, SMAA } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
 import { Laptop } from "./Laptop";
 import { Desk } from "./Desk";
@@ -133,7 +133,7 @@ export const Scene = ({ scrollRef }: SceneProps) => {
 
       <CameraFlight scrollRef={scrollRef} />
 
-      <EffectComposer multisampling={tier === "low" ? 2 : 4} enableNormalPass={false}>
+      <EffectComposer multisampling={0} enableNormalPass={false}>
         {!disableFx ? (
           <>
             <Bloom
@@ -144,6 +144,7 @@ export const Scene = ({ scrollRef }: SceneProps) => {
             />
             {tier === "high" && <Noise opacity={0.012} blendFunction={BlendFunction.OVERLAY} />}
             <Vignette eskil={false} offset={0.18} darkness={0.9} />
+            <SMAA />
           </>
         ) : (
           <></>
