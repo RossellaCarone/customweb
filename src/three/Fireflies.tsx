@@ -7,24 +7,33 @@ interface FirefliesProps {
   tier: PerfTier;
 }
 
+const IS_MOBILE =
+  typeof navigator !== "undefined" &&
+  /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
 /**
  * GPU-instanced glowing motes drifting through the entire space.
  * Vertex shader animates them with sin waves so the CPU stays free.
  */
 export const Fireflies = ({ tier }: FirefliesProps) => {
-  const count = tier === "low" ? 220 : 820;
+  // Mobile low: 60, mobile high: 120, desktop low: 220, desktop high: 820
+  const count = IS_MOBILE
+    ? tier === "low" ? 60 : 120
+    : tier === "low" ? 220 : 820;
+
   const ref = useRef<THREE.Points>(null);
+  const frameCount = useRef(0);
 
   const { geometry, material } = useMemo(() => {
     const positions = new Float32Array(count * 3);
     const seeds = new Float32Array(count);
     for (let i = 0; i < count; i++) {
-      // distribute through whole journey volume
-      positions[i * 3] = (Math.random() - 0.5) * 36;
+      positions[i * 3]     = (Math.random() - 0.5) * 36;
       positions[i * 3 + 1] = Math.random() * 8 - 0.5;
       positions[i * 3 + 2] = -Math.random() * 50 + 4;
       seeds[i] = Math.random() * Math.PI * 2;
     }
+
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 1));
@@ -34,9 +43,9 @@ export const Fireflies = ({ tier }: FirefliesProps) => {
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       uniforms: {
-        uTime: { value: 0 },
+        uTime:  { value: 0 },
         uColor: { value: new THREE.Color("#FFD9A8") },
-        uSize: { value: tier === "low" ? 22 : 34 },
+        uSize:  { value: tier === "low" ? 22 : 34 },
       },
       vertexShader: `
         attribute float aSeed;
@@ -65,10 +74,14 @@ export const Fireflies = ({ tier }: FirefliesProps) => {
         }
       `,
     });
+
     return { geometry, material };
   }, [count, tier]);
 
   useFrame(({ clock }) => {
+    // Su mobile low: aggiorna solo un frame ogni 2 (≈30 fps effettivi)
+    frameCount.current++;
+    if (IS_MOBILE && tier === "low" && frameCount.current % 2 !== 0) return;
     material.uniforms.uTime.value = clock.getElapsedTime();
   });
 

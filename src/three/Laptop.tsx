@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { mapRange } from "@/utils/mapRange";
@@ -8,7 +8,41 @@ import { usePerfTier } from "./usePerf";
 
 interface LaptopProps {
   scrollRef: React.MutableRefObject<number>;
+  castShadows?: boolean;
 }
+
+const IS_MOBILE =
+  typeof navigator !== "undefined" &&
+  /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+/**
+ * 84 tasti collassati in una singola InstancedMesh → 1 draw call invece di 84.
+ */
+const KeyboardKeys = () => {
+  const count = 6 * 14;
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+
+  useMemo(() => {
+    if (!meshRef.current) return;
+    const dummy = new THREE.Object3D();
+    let i = 0;
+    for (let row = 0; row < 6; row++) {
+      for (let col = 0; col < 14; col++) {
+        dummy.position.set(-1.17 + col * 0.18, 0, -0.42 + row * 0.16);
+        dummy.updateMatrix();
+        meshRef.current.setMatrixAt(i++, dummy.matrix);
+      }
+    }
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, []);
+
+  return (
+    <instancedMesh ref={meshRef} args={[undefined, undefined, count]} position={[0, 0.09, 0.05]}>
+      <boxGeometry args={[0.14, 0.012, 0.13]} />
+      <meshStandardMaterial color="#1a1a22" metalness={0.3} roughness={0.6} />
+    </instancedMesh>
+  );
+};
 
 /**
  * Procedural laptop.
@@ -19,7 +53,7 @@ interface LaptopProps {
  *   0.50–0.58  laptop scales up so its screen fills the viewport,
  *              while a global HTML overlay fades in (handled in Index.tsx).
  */
-export const Laptop = ({ scrollRef }: LaptopProps) => {
+export const Laptop = ({ scrollRef, castShadows = false }: LaptopProps) => {
   const lidGroup = useRef<THREE.Group>(null);
   const monitorLight = useRef<THREE.PointLight>(null);
   const root = useRef<THREE.Group>(null);
@@ -28,17 +62,25 @@ export const Laptop = ({ scrollRef }: LaptopProps) => {
   const screenTexture = useScreenTexture({
     projects,
     scrollRef,
-    openingRange: [0.1, 0.22],
-    slideshowRange: [0.22, 0.40],
-    pitchRange: [0.40, 0.54],
-    fadeOutAt: 0.58, // fades to black around the handoff
+    openingRange:  [0.1,  0.22],
+    slideshowRange:[0.22, 0.40],
+    pitchRange:    [0.40, 0.54],
+    fadeOutAt: 0.58,
     lowPower: tier === "low",
   });
+
+  const aluminium = useMemo(
+    () => <meshStandardMaterial color="#9a9aa3" metalness={0.85} roughness={0.35} />,
+    []
+  );
+  const darkPlastic = useMemo(
+    () => <meshStandardMaterial color="#0e0e14" metalness={0.2} roughness={0.7} />,
+    []
+  );
 
   useFrame(() => {
     const s = scrollRef.current;
 
-    // Lid opening
     if (lidGroup.current) {
       const target = mapRange(s, 0.1, 0.22, Math.PI / 2, -0.35);
       lidGroup.current.rotation.x = THREE.MathUtils.lerp(
@@ -48,11 +90,9 @@ export const Laptop = ({ scrollRef }: LaptopProps) => {
       );
     }
 
-    // Monitor glow
     if (monitorLight.current) {
-      const i = mapRange(s, 0.18, 0.28, 0, 1.6);
-      // Fade glow as we hand off to fullscreen overlay
-      const out = mapRange(s, 0.54, 0.6, 1, 0);
+      const i   = mapRange(s, 0.18, 0.28, 0, 1.6);
+      const out = mapRange(s, 0.54, 0.6,  1, 0);
       monitorLight.current.intensity = THREE.MathUtils.lerp(
         monitorLight.current.intensity,
         i * out,
@@ -60,7 +100,6 @@ export const Laptop = ({ scrollRef }: LaptopProps) => {
       );
     }
 
-    // Root: gentle approach into final position; camera flies past it later
     if (root.current) {
       const z = mapRange(s, 0, 0.12, -2.2, 0);
       root.current.position.z = THREE.MathUtils.lerp(root.current.position.z, z, 0.08);
@@ -68,17 +107,10 @@ export const Laptop = ({ scrollRef }: LaptopProps) => {
     }
   });
 
-  const aluminium = (
-    <meshStandardMaterial color="#9a9aa3" metalness={0.85} roughness={0.35} />
-  );
-  const darkPlastic = (
-    <meshStandardMaterial color="#0e0e14" metalness={0.2} roughness={0.7} />
-  );
-
   return (
     <group ref={root} position={[0, 0.02, 0]}>
       {/* Base */}
-      <mesh castShadow receiveShadow position={[0, 0.04, 0]}>
+      <mesh castShadow={castShadows} receiveShadow={castShadows} position={[0, 0.04, 0]}>
         <boxGeometry args={[2.8, 0.08, 1.95]} />
         {aluminium}
       </mesh>
@@ -93,24 +125,13 @@ export const Laptop = ({ scrollRef }: LaptopProps) => {
         <meshStandardMaterial color="#7d7d85" metalness={0.7} roughness={0.45} />
       </mesh>
 
-      <group position={[0, 0.09, 0.05]}>
-        {Array.from({ length: 6 }).map((_, row) =>
-          Array.from({ length: 14 }).map((_, col) => (
-            <mesh
-              key={`${row}-${col}`}
-              position={[-1.17 + col * 0.18, 0, -0.42 + row * 0.16]}
-            >
-              <boxGeometry args={[0.14, 0.012, 0.13]} />
-              <meshStandardMaterial color="#1a1a22" metalness={0.3} roughness={0.6} />
-            </mesh>
-          ))
-        )}
-      </group>
+      {/* Tastiera: 1 draw call invece di 84 */}
+      <KeyboardKeys />
 
       {/* Lid + screen */}
       <group position={[0, 0.08, -0.95]}>
         <group ref={lidGroup} rotation={[Math.PI / 2, 0, 0]}>
-          <mesh castShadow position={[0, 0.925, -0.035]}>
+          <mesh castShadow={castShadows} position={[0, 0.925, -0.035]}>
             <boxGeometry args={[2.8, 1.85, 0.06]} />
             {aluminium}
           </mesh>
@@ -134,7 +155,7 @@ export const Laptop = ({ scrollRef }: LaptopProps) => {
         position={[0, 0.9, -0.3]}
         color="#9ec4ff"
         intensity={0}
-        distance={4}
+        distance={IS_MOBILE ? 2 : 4}
         decay={2}
       />
     </group>

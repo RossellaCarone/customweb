@@ -16,12 +16,12 @@ interface SceneProps {
   scrollRef: React.MutableRefObject<number>;
 }
 
-// ── Detect mobile once, outside components ──────────────────────────────────
+// Calcolato una volta sola a livello di modulo
 const IS_MOBILE =
   typeof navigator !== "undefined" &&
   /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-// ── FX gate: reads scroll every frame and disables post-processing reactively ─
+// ── Post-processing: si abilita/disabilita reattivamente allo scroll ─────────
 const FxGate = ({
   scrollRef,
   tier,
@@ -29,15 +29,12 @@ const FxGate = ({
   scrollRef: React.MutableRefObject<number>;
   tier: string;
 }) => {
-  // On mobile low-tier skip entirely
-  if (IS_MOBILE && tier === "low") return <></>;
-
-  return (
-    <_FxGateInner scrollRef={scrollRef} tier={tier} />
-  );
+  // Su mobile low non montiamo nemmeno il composer
+  if (IS_MOBILE && tier === "low") return null;
+  return <FxGateInner scrollRef={scrollRef} tier={tier} />;
 };
 
-const _FxGateInner = ({
+const FxGateInner = ({
   scrollRef,
   tier,
 }: {
@@ -73,7 +70,7 @@ const _FxGateInner = ({
   );
 };
 
-// ── Camera (invariato, solo estratto IS_MOBILE) ─────────────────────────────
+// ── Camera flight ────────────────────────────────────────────────────────────
 const CameraFlight = ({ scrollRef }: { scrollRef: React.MutableRefObject<number> }) => {
   const wasPortraitRef = useRef<boolean | null>(null);
 
@@ -132,12 +129,12 @@ const CameraFlight = ({ scrollRef }: { scrollRef: React.MutableRefObject<number>
     const orientationChanged =
       wasPortraitRef.current !== null && wasPortraitRef.current !== isPortrait;
     wasPortraitRef.current = isPortrait;
-    const portraitBoost = aspect < 1 ? mapRange(aspect, 1, 0.55, 0, 1) : 0;
-    const contactProgress = mapRange(s, 0.88, 1, 0, 1);
-    const contactMobileZoom = IS_MOBILE && aspect < 1 ? portraitBoost * contactProgress : 0;
-    const portraitZOffset = portraitBoost * 2.2;
-    const portraitFovOffset = portraitBoost * 14;
-    const contactMobileZOffset = contactMobileZoom * -1.9;
+    const portraitBoost       = aspect < 1 ? mapRange(aspect, 1, 0.55, 0, 1) : 0;
+    const contactProgress     = mapRange(s, 0.88, 1, 0, 1);
+    const contactMobileZoom   = IS_MOBILE && aspect < 1 ? portraitBoost * contactProgress : 0;
+    const portraitZOffset     = portraitBoost * 2.2;
+    const portraitFovOffset   = portraitBoost * 14;
+    const contactMobileZOffset  = contactMobileZoom * -1.9;
     const contactMobileFovOffset = contactMobileZoom * -10.5;
     const blend = orientationChanged ? 1 : cameraLerp;
 
@@ -151,30 +148,23 @@ const CameraFlight = ({ scrollRef }: { scrollRef: React.MutableRefObject<number>
     camera.rotation.x = THREE.MathUtils.lerp(camera.rotation.x, rx, blend);
     camera.rotation.y = THREE.MathUtils.lerp(camera.rotation.y, ry, blend);
     const cam = camera as THREE.PerspectiveCamera;
-    const targetFov = fov + portraitFovOffset + contactMobileFovOffset;
-    cam.fov = THREE.MathUtils.lerp(cam.fov, targetFov, blend);
+    cam.fov = THREE.MathUtils.lerp(cam.fov, fov + portraitFovOffset + contactMobileFovOffset, blend);
     cam.updateProjectionMatrix();
   });
+
   return null;
 };
 
-// ── Scene ───────────────────────────────────────────────────────────────────
+// ── Scene ────────────────────────────────────────────────────────────────────
 export const Scene = ({ scrollRef }: SceneProps) => {
   const tier = usePerfTier();
 
-  // DPR: molto più conservativo su mobile
-  const dpr: [number, number] = IS_MOBILE
-    ? tier === "low"
-      ? [1, 1.2]   // telefoni entry-level
-      : [1, 1.5]   // telefoni mid/high
-    : tier === "low"
-    ? [1, 1.75]
-    : [1, 2];
-
-  // Le ombre costano moltissimo su mobile — mai abilitarle
   const castShadows = tier === "high" && !IS_MOBILE;
 
-  // Fog più vicina su mobile (meno geometria da renderizzare)
+  const dpr: [number, number] = IS_MOBILE
+    ? tier === "low" ? [1, 1.2] : [1, 1.5]
+    : tier === "low" ? [1, 1.75] : [1, 2];
+
   const fogFar = IS_MOBILE ? 35 : 50;
 
   return (
@@ -183,7 +173,7 @@ export const Scene = ({ scrollRef }: SceneProps) => {
       dpr={dpr}
       camera={{ position: [0, 1.6, 5.2], fov: 38, near: 0.1, far: 80 }}
       gl={{
-        antialias: !IS_MOBILE, // antialias disabilitato su mobile (costoso)
+        antialias: !IS_MOBILE,
         powerPreference: "high-performance",
       }}
       style={{ position: "fixed", inset: 0 }}
@@ -191,7 +181,6 @@ export const Scene = ({ scrollRef }: SceneProps) => {
       <color attach="background" args={["#06060A"]} />
       <fog attach="fog" args={["#06060A", 8, fogFar]} />
 
-      {/* Lamp — shadow solo su desktop high */}
       <spotLight
         position={[2.8, 4, 2]}
         angle={0.55}
@@ -200,7 +189,7 @@ export const Scene = ({ scrollRef }: SceneProps) => {
         color="#ffd9a8"
         distance={14}
         castShadow={castShadows}
-        shadow-mapSize={[512, 512]} // ← ridotto da 1024
+        shadow-mapSize={[512, 512]}
       />
       <ambientLight intensity={0.18} color="#7080a8" />
       <hemisphereLight args={["#3a3a55", "#0a0a0f", 0.25]} />
@@ -208,10 +197,10 @@ export const Scene = ({ scrollRef }: SceneProps) => {
       <Suspense fallback={null}>
         <Floor tier={tier} />
         <Desk />
-        <Laptop scrollRef={scrollRef} />
+        <Laptop scrollRef={scrollRef} castShadows={castShadows} />
         <ProjectMonoliths scrollRef={scrollRef} range={[0.58, 0.88]} />
         <ContactObelisk scrollRef={scrollRef} range={[0.88, 1.0]} />
-        {/* Fireflies ridotte su mobile */}
+        {/* Fireflies disabilitate su mobile low */}
         {(!IS_MOBILE || tier !== "low") && <Fireflies tier={tier} />}
       </Suspense>
 
