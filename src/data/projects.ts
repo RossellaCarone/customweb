@@ -14,6 +14,8 @@ export interface Project {
   highlights: string[]; // bullets used in orbital gallery left column
 }
 
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 export const projects: Project[] = [
   {
     id: "ladolcesosta",
@@ -24,9 +26,9 @@ export const projects: Project[] = [
     category: "Hospitality · Brand site",
     stack: ["React", "Tailwind", "Astro"],
     url: "https://ladolcesostahome.com",
-    screenshot: "/screens/ladolcesosta.png",
-    video: "/videos/ladolcesosta.hq.mp4",
-    videoWebm: "/videos/ladolcesosta.webm",
+    screenshot: `${base}/screens/ladolcesosta.png`,
+    video: `${base}/videos/ladolcesosta.hq.mp4`,
+    videoWebm: `${base}/videos/ladolcesosta.webm`,
     blurb:
        "Uno spazio digitale caldo e cinematografico per una casa vacanze in Puglia: racconta la casa, valorizza il territorio e accompagna verso la prenotazione.",
     highlights: [
@@ -44,9 +46,9 @@ export const projects: Project[] = [
     category: "Personal brand · Professionale",
     stack: ["React", "Tailwind", "Astro"],
     url: "https://dedonatopsicologa.com",
-    screenshot: "/screens/dedonatopsicologa.png",
-    video: "/videos/dedonatopsicologa.hq.mp4",
-    videoWebm: "/videos/dedonatopsicologa.webm",
+    screenshot: `${base}/screens/dedonatopsicologa.png`,
+    video: `${base}/videos/dedonatopsicologa.hq.mp4`,
+    videoWebm: `${base}/videos/dedonatopsicologa.webm`,
     blurb:
       "Un sito professionale per una psicologa clinica, disegnato per comunicare calma, competenza e accessibilità, abbassando la fatica emotiva del primo contatto.",
     highlights: [
