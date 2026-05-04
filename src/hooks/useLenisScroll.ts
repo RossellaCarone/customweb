@@ -8,6 +8,8 @@ import Lenis from "lenis";
 export function useLenisScroll() {
   const progressRef = useRef(0);
   const [progress, setProgress] = useState(0);
+  const restoringRef = useRef(false);
+  const lockedProgressRef = useRef(0);
 
   useEffect(() => {
     const lenis = new Lenis({
@@ -24,22 +26,47 @@ export function useLenisScroll() {
     rafId = requestAnimationFrame(raf);
 
     const onScroll = ({ progress }: { progress: number }) => {
+      if (restoringRef.current) return;
       progressRef.current = progress;
       setProgress(progress);
     };
     lenis.on("scroll", onScroll);
 
     let resizeRaf = 0;
+    let resizeT1 = 0;
+    let resizeT2 = 0;
+    let unlockT = 0;
+
+    const applyLockedFrame = () => {
+      const safeLenis = lenis as unknown as {
+        limit?: number;
+        resize?: () => void;
+        scrollTo: (target: number, opts?: { immediate?: boolean; force?: boolean }) => void;
+      };
+      safeLenis.resize?.();
+      const limit =
+        safeLenis.limit ?? Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      const targetY = Math.max(0, Math.min(limit, lockedProgressRef.current * limit));
+      safeLenis.scrollTo(targetY, { immediate: true, force: true });
+      progressRef.current = lockedProgressRef.current;
+      setProgress(lockedProgressRef.current);
+    };
+
     const restoreFrameOnResize = () => {
-      const savedProgress = progressRef.current;
+      lockedProgressRef.current = progressRef.current;
+      restoringRef.current = true;
       cancelAnimationFrame(resizeRaf);
+      clearTimeout(resizeT1);
+      clearTimeout(resizeT2);
+      clearTimeout(unlockT);
       resizeRaf = requestAnimationFrame(() => {
-        const limit =
-          (lenis as unknown as { limit?: number }).limit ??
-          Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-        const targetY = Math.max(0, Math.min(limit, savedProgress * limit));
-        lenis.scrollTo(targetY, { immediate: true, force: true });
+        applyLockedFrame();
       });
+      resizeT1 = window.setTimeout(applyLockedFrame, 120);
+      resizeT2 = window.setTimeout(applyLockedFrame, 280);
+      unlockT = window.setTimeout(() => {
+        restoringRef.current = false;
+      }, 420);
     };
 
     window.addEventListener("resize", restoreFrameOnResize);
@@ -48,6 +75,9 @@ export function useLenisScroll() {
     return () => {
       cancelAnimationFrame(rafId);
       cancelAnimationFrame(resizeRaf);
+      clearTimeout(resizeT1);
+      clearTimeout(resizeT2);
+      clearTimeout(unlockT);
       window.removeEventListener("resize", restoreFrameOnResize);
       window.removeEventListener("orientationchange", restoreFrameOnResize);
       lenis.destroy();
