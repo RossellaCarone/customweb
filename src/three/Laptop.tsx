@@ -88,7 +88,7 @@ export const Laptop = ({ scrollRef }: LaptopProps) => {
         {darkPlastic}
       </mesh>
 
-      <mesh position={[0, 0.086, 0.7]}>
+      <mesh position={[0, 0.089, 0.7]}>
         <boxGeometry args={[1.0, 0.003, 0.55]} />
         <meshStandardMaterial color="#7d7d85" metalness={0.7} roughness={0.45} />
       </mesh>
