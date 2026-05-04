@@ -116,11 +116,6 @@ export function useScreenTexture({
       ctx.globalAlpha = 1;
     };
 
-    const drawScanlines = (alpha = 0.035) => {
-      ctx.fillStyle = `rgba(120, 160, 220, ${alpha})`;
-      for (let y = 0; y < SCREEN_H; y += 3) ctx.fillRect(0, y, SCREEN_W, 1);
-    };
-
     const smoothstep = (k: number) => {
       const t = Math.max(0, Math.min(1, k));
       return t * t * (3 - 2 * t);
@@ -150,7 +145,6 @@ export function useScreenTexture({
       ctx.restore();
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";
-      drawScanlines();
     };
 
     /* ---------- B. sequential slideshow (no loop) ----------
@@ -176,7 +170,6 @@ export function useScreenTexture({
       const img = assets.screenshots[idx];
       if (img) drawContain(img, 0, 0, SCREEN_W, SCREEN_H, alpha);
 
-      drawScanlines();
     };
 
     /* ---------- C. value proposition pitch ---------- */
@@ -245,7 +238,6 @@ export function useScreenTexture({
 
       // CTA hint
       ctx.restore();
-      drawScanlines(0.025);
     };
 
     /* ---------- LOOP ---------- */
