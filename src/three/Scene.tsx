@@ -169,7 +169,7 @@ export const Scene = ({ scrollRef }: SceneProps) => {
     <Canvas
       shadows={castShadows}
       dpr={[1, 2]}
-      camera={{ position: [0, 1.6, 5.2], fov: 38, near: 0.1, far: 80 }}
+      camera={{ position: [0, 1.6, 5.2], fov: 38, near: 0.5, far: 60 }}
       gl={{
         antialias: !IS_MOBILE,
         powerPreference: "high-performance",

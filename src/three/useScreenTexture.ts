@@ -2,8 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import type { Project } from "@/data/projects";
 
-const SCREEN_W = 1600;
-const SCREEN_H = 1000;
+const IS_MOBILE =
+  typeof navigator !== "undefined" &&
+  /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+const SCREEN_W = IS_MOBILE ? 800 : 1600;
+const SCREEN_H = IS_MOBILE ? 500 : 1000;
 
 interface ScreenTextureOptions {
   projects: Project[];
