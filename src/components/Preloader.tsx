@@ -95,9 +95,29 @@ export const Preloader = ({
         </div>
 
         {showRotateHint && (
-          <p className="absolute -bottom-14 left-1/2 w-max -translate-x-1/2 font-mono text-[10px] uppercase tracking-mono-wide text-muted-foreground">
-            Suggerimento: ruota lo schermo
-          </p>
+          <div className="absolute -bottom-28 left-1/2 flex -translate-x-1/2 flex-col items-center">
+            <svg
+              className="h-12 w-12 text-gold animate-[spin_2s_ease-in-out_infinite]"
+              viewBox="0 0 64 64"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="14" y="10" width="24" height="40" rx="3" />
+              <line x1="22" y1="45" x2="30" y2="45" />
+              <path d="M44 20 A14 14 0 0 1 50 32" />
+              <polyline points="46,14 44,20 50,21" />
+            </svg>
+            <p className="mt-4 font-mono text-[11px] uppercase tracking-mono-xwide text-gold">
+              Ruota lo schermo
+            </p>
+            <p className="mt-1 font-mono text-[10px] tracking-mono-wide text-muted-foreground">
+              per la migliore esperienza
+            </p>
+          </div>
         )}
       </div>
     </div>

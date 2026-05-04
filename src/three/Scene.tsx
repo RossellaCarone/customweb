@@ -1,7 +1,7 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Suspense } from "react";
 import * as THREE from "three";
-import { EffectComposer, Bloom, Vignette, Noise } from "@react-three/postprocessing";
+import { EffectComposer, Bloom, Vignette, Noise, FXAA } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
 import { Laptop } from "./Laptop";
 import { Desk } from "./Desk";
@@ -102,9 +102,9 @@ export const Scene = ({ scrollRef }: SceneProps) => {
   return (
     <Canvas
       shadows={tier === "high"}
-      dpr={tier === "low" ? [1, 1.5] : [1, 2]}
+      dpr={tier === "low" ? [1, 1.85] : [1, 2]}
       camera={{ position: [0, 1.6, 5.2], fov: 38, near: 0.1, far: 80 }}
-      gl={{ antialias: tier === "high", powerPreference: "high-performance" }}
+      gl={{ antialias: true, powerPreference: "high-performance" }}
       style={{ position: "fixed", inset: 0 }}
     >
       <color attach="background" args={["#06060A"]} />
@@ -144,6 +144,7 @@ export const Scene = ({ scrollRef }: SceneProps) => {
               luminanceSmoothing={0.4}
               mipmapBlur
             />
+            {tier === "low" && <FXAA />}
             {tier === "high" && <Noise opacity={0.012} blendFunction={BlendFunction.OVERLAY} />}
             <Vignette eskil={false} offset={0.18} darkness={0.9} />
           </>
