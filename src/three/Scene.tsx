@@ -26,7 +26,7 @@ interface SceneProps {
  *   0.90 – 1.00  Camera glides toward the contact panel
  */
 const CameraFlight = ({ scrollRef }: { scrollRef: React.MutableRefObject<number> }) => {
-  useFrame(({ camera }) => {
+  useFrame(({ camera, size }) => {
     const s = scrollRef.current;
 
     let px = 0, py = 1.6, pz = 5.2, rx = -0.18, ry = 0, fov = 38;
@@ -87,7 +87,9 @@ const CameraFlight = ({ scrollRef }: { scrollRef: React.MutableRefObject<number>
     camera.rotation.x = THREE.MathUtils.lerp(camera.rotation.x, rx, cameraLerp);
     camera.rotation.y = THREE.MathUtils.lerp(camera.rotation.y, ry, cameraLerp);
     const cam = camera as THREE.PerspectiveCamera;
-    cam.fov = THREE.MathUtils.lerp(cam.fov, fov, cameraLerp);
+    const aspect = size.width / size.height;
+    const targetFov = aspect < 1 ? (fov / Math.max(aspect, 0.55)) * 0.7 : fov;
+    cam.fov = THREE.MathUtils.lerp(cam.fov, targetFov, cameraLerp);
     cam.updateProjectionMatrix();
   });
   return null;

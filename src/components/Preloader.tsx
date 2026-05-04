@@ -3,13 +3,18 @@ import { useEffect, useState } from "react";
 interface PreloaderProps {
   onComplete: () => void;
   name?: string;
+  showRotateHint?: boolean;
 }
 
 /**
  * Cinematic preloader: gold line fills, counter ticks 0→100,
  * name reveals letter by letter, flash → fade out.
  */
-export const Preloader = ({ onComplete, name = "CUSTOM WEB" }: PreloaderProps) => {
+export const Preloader = ({
+  onComplete,
+  name = "CUSTOM WEB",
+  showRotateHint = false,
+}: PreloaderProps) => {
   const [count, setCount] = useState(0);
   const [visibleChars, setVisibleChars] = useState(0);
   const [flashing, setFlashing] = useState(false);
@@ -88,6 +93,12 @@ export const Preloader = ({ onComplete, name = "CUSTOM WEB" }: PreloaderProps) =
             </span>
           ))}
         </div>
+
+        {showRotateHint && (
+          <p className="absolute -bottom-14 left-1/2 w-max -translate-x-1/2 font-mono text-[10px] uppercase tracking-mono-wide text-muted-foreground">
+            Suggerimento: ruota lo schermo
+          </p>
+        )}
       </div>
     </div>
   );

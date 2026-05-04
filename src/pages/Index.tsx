@@ -40,39 +40,14 @@ const Index = () => {
   const quoteOpacity =
     mapRange(progress, 0.14, 0.2, 0, 1) * mapRange(progress, 0.3, 0.36, 1, 0);
 
-  // Hide top chrome once the camera leaves the atelier (after portal flight)
-  const chromeOpacity = mapRange(progress, 0.5, 0.58, 1, 0);
-
   return (
     <>
-      {!loaded && <Preloader onComplete={() => setLoaded(true)} name="CUSTOM WEB" />}
-
-      {portraitMobile && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#06060A]">
-          <svg
-            className="w-16 h-16 text-gold animate-[spin_2s_ease-in-out_infinite]"
-            viewBox="0 0 64 64"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            {/* Phone outline */}
-            <rect x="14" y="10" width="24" height="40" rx="3" />
-            {/* Home bar */}
-            <line x1="22" y1="45" x2="30" y2="45" />
-            {/* Rotation arrow */}
-            <path d="M44 20 A14 14 0 0 1 50 32" />
-            <polyline points="46,14 44,20 50,21" />
-          </svg>
-          <p className="mt-8 font-mono text-[11px] uppercase tracking-mono-xwide text-gold">
-            Ruota lo schermo
-          </p>
-          <p className="mt-2 font-mono text-[10px] tracking-mono-wide text-muted-foreground">
-            per la migliore esperienza
-          </p>
-        </div>
+      {!loaded && (
+        <Preloader
+          onComplete={() => setLoaded(true)}
+          name="CUSTOM WEB"
+          showRotateHint={portraitMobile}
+        />
       )}
 
       <Scene scrollRef={progressRef} />
