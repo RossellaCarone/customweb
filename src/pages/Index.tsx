@@ -17,7 +17,7 @@ const Index = () => {
   useEffect(() => {
     const check = () => {
       const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-      setPortraitMobile(isMobile && window.innerHeight > window.innerWidth);
+      setPortraitMobile(isMobile && screen.height > screen.width);
     };
     check();
     window.addEventListener("resize", check);
