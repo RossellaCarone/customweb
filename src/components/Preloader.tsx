@@ -95,7 +95,7 @@ export const Preloader = ({
         </div>
 
         {showRotateHint && (
-          <div className="absolute -bottom-28 left-1/2 flex -translate-x-1/2 flex-col items-center">
+          <div className="mt-2 flex flex-col items-center">
             <svg
               className="h-12 w-12 text-gold animate-[spin_2s_ease-in-out_infinite]"
               viewBox="0 0 64 64"
