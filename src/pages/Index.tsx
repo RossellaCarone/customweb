@@ -119,7 +119,7 @@ const Index = () => {
       <aside
         className={`pointer-events-none fixed z-30 ${
           portraitMobile
-            ? "left-1/2 top-[28%] max-w-[84vw] -translate-x-1/2 text-center"
+            ? "left-1/2 top-[20%] max-w-[84vw] -translate-x-1/2 text-center"
             : "left-6 top-1/2 max-w-xs -translate-y-1/2 sm:left-12 md:max-w-sm lg:left-20"
         }`}
         style={{ opacity: quoteOpacity }}
