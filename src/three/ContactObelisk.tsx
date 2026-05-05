@@ -252,6 +252,67 @@ export const ContactObelisk = ({ scrollRef, range }: ContactObeliskProps) => {
     return ["text", "search", "tel", "url", "password"].includes(input.type);
   };
 
+  // Attach listeners to the native hidden inputs to sync values and keep focus when appropriate
+  useEffect(() => {
+    const nomeEl = document.getElementById("cw-nome") as HTMLInputElement | null;
+    const emailEl = document.getElementById("cw-email") as HTMLInputElement | null;
+    const messageEl = document.getElementById("cw-message") as HTMLTextAreaElement | null;
+    if (!nomeEl || !emailEl || !messageEl) return;
+
+    const onInput = (key: FieldKey) => (e: Event) => {
+      const el = e.target as HTMLInputElement | HTMLTextAreaElement;
+      formRef.current = { ...formRef.current, [key]: el.value } as any;
+      redraw();
+    };
+
+    const onFocus = (key: FieldKey) => () => {
+      formRef.current = { ...formRef.current, active: key } as any;
+      redraw();
+    };
+
+    const onBlur = (key: FieldKey) => () => {
+      // if canvas still marks this field active, try to refocus shortly after blur
+      redraw();
+      if (formRef.current.active === key && formRef.current.status === "idle") {
+        setTimeout(() => {
+          try {
+            const el = document.getElementById(`cw-${key}`) as HTMLInputElement | HTMLTextAreaElement | null;
+            if (el && document.activeElement !== el) el.focus();
+          } catch {}
+        }, 120);
+      } else {
+        formRef.current = { ...formRef.current, active: null };
+      }
+    };
+
+    nomeEl.addEventListener("input", onInput("nome"));
+    emailEl.addEventListener("input", onInput("email"));
+    messageEl.addEventListener("input", onInput("message"));
+    nomeEl.addEventListener("focus", onFocus("nome"));
+    emailEl.addEventListener("focus", onFocus("email"));
+    messageEl.addEventListener("focus", onFocus("message"));
+    nomeEl.addEventListener("blur", onBlur("nome"));
+    emailEl.addEventListener("blur", onBlur("email"));
+    messageEl.addEventListener("blur", onBlur("message"));
+
+    // initialize values
+    nomeEl.value = formRef.current.nome;
+    emailEl.value = formRef.current.email;
+    messageEl.value = formRef.current.message;
+
+    return () => {
+      nomeEl.removeEventListener("input", onInput("nome"));
+      emailEl.removeEventListener("input", onInput("email"));
+      messageEl.removeEventListener("input", onInput("message"));
+      nomeEl.removeEventListener("focus", onFocus("nome"));
+      emailEl.removeEventListener("focus", onFocus("email"));
+      messageEl.removeEventListener("focus", onFocus("message"));
+      nomeEl.removeEventListener("blur", onBlur("nome"));
+      emailEl.removeEventListener("blur", onBlur("email"));
+      messageEl.removeEventListener("blur", onBlur("message"));
+    };
+  }, []);
+
   // Canvas + texture
   const { ctx, texture } = useMemo(() => {
     const canvas = document.createElement("canvas");
