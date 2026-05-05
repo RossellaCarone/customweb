@@ -222,19 +222,20 @@ export const ContactObelisk = ({ scrollRef, range }: ContactObeliskProps) => {
   // Create fixed, invisible native inputs so mobile keyboards can be invoked reliably
   useEffect(() => {
     const container = document.createElement("div");
+    // anchor near bottom so mobile browsers consider the input 'in view'
     container.style.position = "fixed";
     container.style.left = "0";
-    container.style.top = "0";
-    container.style.width = "1px";
+    container.style.right = "0";
+    container.style.bottom = "0";
     container.style.height = "1px";
     container.style.overflow = "hidden";
     container.style.opacity = "0";
     container.style.pointerEvents = "auto";
     container.style.zIndex = "9999";
     container.innerHTML = `
-      <input id="cw-nome" tabindex="0" inputmode="text" autocomplete="name" />
-      <input id="cw-email" tabindex="0" inputmode="email" type="email" autocomplete="email" />
-      <textarea id="cw-message" tabindex="0" inputmode="text"></textarea>
+      <input id="cw-nome" tabindex="0" inputmode="text" autocomplete="name" style="width:100px;height:24px;" />
+      <input id="cw-email" tabindex="0" inputmode="email" type="text" autocomplete="email" style="width:100px;height:24px;" />
+      <textarea id="cw-message" tabindex="0" inputmode="text" style="width:200px;height:48px;"></textarea>
     `;
     document.body.appendChild(container);
 
