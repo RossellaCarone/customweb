@@ -219,6 +219,38 @@ export const ContactObelisk = ({ scrollRef, range }: ContactObeliskProps) => {
   });
   const dirtyRef = useRef(true);
 
+  // Create fixed, invisible native inputs so mobile keyboards can be invoked reliably
+  useEffect(() => {
+    const container = document.createElement("div");
+    container.style.position = "fixed";
+    container.style.left = "0";
+    container.style.top = "0";
+    container.style.width = "1px";
+    container.style.height = "1px";
+    container.style.overflow = "hidden";
+    container.style.opacity = "0";
+    container.style.pointerEvents = "auto";
+    container.style.zIndex = "9999";
+    container.innerHTML = `
+      <input id="cw-nome" tabindex="0" inputmode="text" autocomplete="name" />
+      <input id="cw-email" tabindex="0" inputmode="email" type="email" autocomplete="email" />
+      <textarea id="cw-message" tabindex="0" inputmode="text"></textarea>
+    `;
+    document.body.appendChild(container);
+
+    return () => { if (container.parentElement) container.parentElement.removeChild(container); };
+  }, []);
+
+  // helper to check whether selection can be set on an element
+  const canSetSelection = (el: Element | null): el is HTMLInputElement | HTMLTextAreaElement => {
+    if (!el) return false;
+    if (el.tagName === "TEXTAREA") return true;
+    if (el.tagName !== "INPUT") return false;
+    const input = el as HTMLInputElement;
+    // Only these input types reliably support setSelectionRange
+    return ["text", "search", "tel", "url", "password"].includes(input.type);
+  };
+
   // Canvas + texture
   const { ctx, texture } = useMemo(() => {
     const canvas = document.createElement("canvas");
@@ -343,6 +375,7 @@ export const ContactObelisk = ({ scrollRef, range }: ContactObeliskProps) => {
         position={[0, 0, 0.13]}
         onPointerDown={(e) => {
           e.stopPropagation();
+          try { e.preventDefault(); } catch {}
           if (!e.uv) return;
           const cx = e.uv.x * CW;
           const cy = (1 - e.uv.y) * CH;
@@ -354,6 +387,19 @@ export const ContactObelisk = ({ scrollRef, range }: ContactObeliskProps) => {
                 handleSubmit();
               } else {
                 formRef.current = { ...f, active: key };
+                // focus corresponding native input to open mobile keyboard
+                try {
+                  const el = document.getElementById(`cw-${key}`) as HTMLInputElement | HTMLTextAreaElement | null;
+                  if (el) {
+                    el.focus();
+                    const v = el.value || "";
+                    setTimeout(() => {
+                      try {
+                        if (canSetSelection(el)) el.setSelectionRange(v.length, v.length);
+                      } catch {}
+                    }, 150);
+                  }
+                } catch {}
                 redraw();
               }
               return;
@@ -362,6 +408,7 @@ export const ContactObelisk = ({ scrollRef, range }: ContactObeliskProps) => {
           formRef.current = { ...f, active: null };
           redraw();
         }}
+        onPointerUp={(e) => { e.stopPropagation(); try { e.preventDefault(); } catch {} }}
         onPointerOver={() => { gl.domElement.style.cursor = "text"; }}
         onPointerOut={() => { gl.domElement.style.cursor = "default"; }}
       >

@@ -3,7 +3,6 @@ import { Preloader } from "@/components/Preloader";
 import { Scene } from "@/three/Scene";
 import { useLenisScroll } from "@/hooks/useLenisScroll";
 import { mapRange } from "@/utils/mapRange";
-import { projects } from "@/data/projects";
 
 /**
  * Custom Web  — single continuous 3D world.
@@ -12,8 +11,6 @@ import { projects } from "@/data/projects";
  */
 const Index = () => {
   const [loaded, setLoaded] = useState(false);
-  const [assetsReady, setAssetsReady] = useState(false);
-  const [animationDone, setAnimationDone] = useState(false);
   const [portraitMobile, setPortraitMobile] = useState(false);
   const { progress, progressRef } = useLenisScroll();
 
@@ -35,33 +32,6 @@ const Index = () => {
     document.title = "Custom Web — Web Designer & Developer";
   }, []);
 
-  // Start preloading screenshots as soon as the page mounts.
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all(
-      projects.map(
-        (p) =>
-          new Promise<void>((resolve, reject) => {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.onload = () => resolve();
-            img.onerror = () => resolve(); // tolerate failures
-            img.src = p.screenshot;
-          })
-      )
-    ).then(() => {
-      if (!cancelled) setAssetsReady(true);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // When both the preloader animation and assets are ready, mark loaded.
-  useEffect(() => {
-    if (animationDone && assetsReady) setLoaded(true);
-  }, [animationDone, assetsReady]);
-
   const heroOpacity = mapRange(progress, 0, 0.08, 1, 0);
   const heroLineOpacity = mapRange(progress, 0.04, 0.12, 1, 0);
   const indicatorOpacity = mapRange(progress, 0, 0.04, 1, 0);
@@ -74,7 +44,7 @@ const Index = () => {
     <>
       {!loaded && (
         <Preloader
-          onComplete={() => setAnimationDone(true)}
+          onComplete={() => setLoaded(true)}
           name="CUSTOM WEB"
           showRotateHint={portraitMobile}
         />
