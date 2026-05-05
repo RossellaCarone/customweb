@@ -192,7 +192,7 @@ export const Scene = ({ scrollRef }: SceneProps) => {
         color="#ffd9a8"
         distance={14}
         castShadow={castShadows}
-        shadow-mapSize={[512, 512]}
+        shadow-mapSize={tier === "low" ? [256, 256] : [512, 512]}
       />
       <ambientLight intensity={0.18} color="#7080a8" />
       <hemisphereLight args={["#3a3a55", "#0a0a0f", 0.25]} />

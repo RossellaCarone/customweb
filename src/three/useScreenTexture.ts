@@ -16,7 +16,7 @@ interface ScreenTextureOptions {
 }
 
 interface LoadedAssets {
-  screenshots: HTMLImageElement[];
+  screenshots: ImageBitmap[];
 }
 
 export function useScreenTexture({
@@ -35,11 +35,35 @@ export function useScreenTexture({
     Promise.all(
       projects.map(
         (p) =>
-          new Promise<HTMLImageElement>((resolve, reject) => {
+          new Promise<ImageBitmap>((resolve) => {
             const img = new Image();
             img.crossOrigin = "anonymous";
-            img.onload = () => resolve(img);
-            img.onerror = reject;
+            img.decoding = "async" as any;
+            img.onload = async () => {
+              try {
+                const bitmap = await createImageBitmap(img);
+                resolve(bitmap);
+              } catch (e) {
+                const c = document.createElement('canvas');
+                c.width = 1;
+                c.height = 1;
+                const ctx = c.getContext('2d')!;
+                ctx.fillStyle = '#0A0A0F';
+                ctx.fillRect(0,0,1,1);
+                const bm = await createImageBitmap(c);
+                resolve(bm);
+              }
+            };
+            img.onerror = () => {
+              // create a tiny placeholder bitmap to avoid nulls
+              const c = document.createElement('canvas');
+              c.width = 1;
+              c.height = 1;
+              const ctx = c.getContext('2d')!;
+              ctx.fillStyle = '#0A0A0F';
+              ctx.fillRect(0,0,1,1);
+              createImageBitmap(c).then((bm) => resolve(bm));
+            };
             img.src = p.screenshot;
           })
       )
@@ -73,14 +97,16 @@ export function useScreenTexture({
 
     /* ---------- helpers ---------- */
     const drawContain = (
-      img: HTMLImageElement,
+      img: CanvasImageSource,
       x: number,
       y: number,
       w: number,
       h: number,
       alpha = 1
     ) => {
-      const ir = img.width / img.height;
+      // CanvasImageSource doesn't expose width/height types, coerce via any
+      const i = img as any;
+      const ir = i.width / i.height;
       const cr = w / h;
       let dw, dh, dx, dy;
       if (ir > cr) {

@@ -21,7 +21,7 @@ export const Preloader = ({
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
-    const total = 1500;
+    const total = 2000;
     const start = performance.now();
     let raf = 0;
 
